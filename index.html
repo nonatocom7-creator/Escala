@@ -651,7 +651,7 @@
 
     <script>
         // === ATENÇÃO: COLOQUE A SUA URL AQUI ===
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMZ0F43a5uVsiRr2s-MHPgfJ6SGTWYVi2LAyJXq7bsxLUva2Y6OMD0w8CGI0IkmbD3/exec';
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzdM72qbS8ecEnkRpkLnPmW3vwFvhCvKxIu5HESzf_Evk8z2p2lGc0x_5vge6-hUMbS/exec';
 
         function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -668,7 +668,7 @@
                 try {
                     const method = ['getConfig', 'getDashboard'].includes(action) ? 'GET' : 'POST';
                     let url = SCRIPT_URL;
-                    let options = { method: method };
+                    let options = { method: method, redirect: 'follow' };
 
                     if (method === 'GET') {
                         const params = new URLSearchParams({ action, ...payload });
@@ -679,9 +679,16 @@
                     }
 
                     const response = await fetch(url, options);
-                    const result = await response.json();
+                    const text = await response.text(); 
                     hideLoading();
-                    return result;
+                    
+                    try {
+                        const result = JSON.parse(text);
+                        return result;
+                    } catch (e) {
+                        console.error("Retorno inesperado do Google:", text);
+                        return { status: 'error', data: { message: 'Erro de permissão! Refaça a implantação como "Eu" e "Qualquer pessoa".' } };
+                    }
                 } catch (error) {
                     hideLoading();
                     console.error("API Error:", error);
