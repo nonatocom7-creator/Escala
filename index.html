@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PlantãoPro</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
@@ -41,7 +42,7 @@
             color: #1e293b;
         }
         
-        /* Simulação do celular mais realista */
+        /* Simulação do celular */
         #mobile-container {
             width: 100%;
             max-width: 414px;
@@ -60,7 +61,6 @@
                 height: 90vh;
                 border-radius: 2.5rem;
             }
-            /* Notch Simulado */
             #mobile-container::before {
                 content: '';
                 position: absolute;
@@ -79,7 +79,6 @@
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-        /* Animações Modernas */
         .screen {
             display: none;
             flex: 1;
@@ -107,7 +106,6 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
-        /* Efeito Glassmorphism */
         .glass-panel {
             background: rgba(255, 255, 255, 0.7);
             backdrop-filter: blur(10px);
@@ -156,7 +154,6 @@
         }
         @keyframes fadeOut { to { opacity: 0; transform: translateY(-10px); } }
 
-        /* Floating Animation */
         .floating {
             animation: floating 3s ease-in-out infinite;
         }
@@ -165,16 +162,43 @@
             50% { transform: translateY(-8px); }
             100% { transform: translateY(0px); }
         }
+
+        #loading-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #14b8a6;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        #pdf-template { display: none; }
     </style>
 </head>
 <body>
 
     <div id="mobile-container">
         <div id="toast-container"></div>
+        
+        <div id="loading-overlay">
+            <div class="spinner mb-3"></div>
+            <p class="text-brand-600 font-bold text-sm">Sincronizando...</p>
+        </div>
 
         <!-- TELA 1: LOGIN -->
         <div id="screen-auth" class="screen active bg-gradient-to-br from-brand-400 via-brand-500 to-blue-600 justify-center p-6 relative overflow-hidden">
-            <!-- Círculos de fundo decorativos -->
             <div class="absolute -top-20 -left-20 w-64 h-64 bg-white opacity-10 rounded-full blur-2xl"></div>
             <div class="absolute bottom-10 -right-10 w-48 h-48 bg-brand-300 opacity-20 rounded-full blur-xl"></div>
 
@@ -198,18 +222,21 @@
                     </div>
                     
                     <div class="pt-6 flex flex-col gap-3">
-                        <button type="button" onclick="handleLogin()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-[0_8px_15px_rgba(0,0,0,0.1)] hover:bg-gray-800 hover:-translate-y-0.5 active:translate-y-0 transition-all">
+                        <button type="button" onclick="handleLogin()" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-[0_8px_15px_rgba(0,0,0,0.1)] hover:bg-gray-800 transition-all">
                             Entrar
                         </button>
-                        <button type="button" onclick="handleRegister()" class="w-full bg-white text-gray-700 font-bold py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 active:translate-y-0 transition-all">
+                        <button type="button" onclick="handleRegister()" class="w-full bg-white text-gray-700 font-bold py-3.5 rounded-xl border border-gray-200 hover:bg-gray-50 transition-all">
                             Criar Nova Conta
+                        </button>
+                        <button type="button" onclick="openRecoveryModal()" class="text-sm font-medium text-white/80 hover:text-white mt-2 transition-colors">
+                            Esqueceu a senha?
                         </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <!-- HEADER (Visível dentro do app) -->
+        <!-- HEADER -->
         <div id="app-header" class="hidden glass-nav px-6 py-4 pt-12 flex justify-between items-center z-10 sticky top-0">
             <div>
                 <h2 id="header-title" class="text-3xl font-black text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-blue-600 tracking-tight pb-1">Financeiro</h2>
@@ -229,14 +256,12 @@
         <div id="screen-dashboard" class="screen bg-slate-50 no-scrollbar pb-32">
             <div class="p-6 space-y-6">
                 
-                <!-- Controle de Mês -->
                 <div class="flex justify-between items-center bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
                     <button onclick="changeMonth(-1)" class="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-brand-50 hover:text-brand-600 transition-all"><i class="fas fa-chevron-left"></i></button>
-                    <span id="dash-month-label" class="font-bold text-gray-700 text-lg">...</span>
+                    <span id="dash-month-label" class="font-bold text-gray-700 text-lg uppercase tracking-wider">...</span>
                     <button onclick="changeMonth(1)" class="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-brand-50 hover:text-brand-600 transition-all"><i class="fas fa-chevron-right"></i></button>
                 </div>
 
-                <!-- Cards de Resumo -->
                 <div class="grid grid-cols-2 gap-4">
                     <div class="bg-gradient-to-br from-gray-900 to-gray-800 p-5 rounded-3xl shadow-lg shadow-gray-900/20 text-white relative overflow-hidden group">
                         <div class="absolute -right-4 -top-4 w-16 h-16 bg-white/10 rounded-full group-hover:scale-150 transition-transform duration-500"></div>
@@ -256,18 +281,15 @@
                     </div>
                 </div>
 
-                <!-- Resumo por Local (Novo) -->
                 <div id="dash-locais" class="flex gap-3 overflow-x-auto no-scrollbar py-1">
                     <!-- Injetado via JS -->
                 </div>
 
-                <!-- Histórico -->
                 <div>
                     <div class="flex justify-between items-end mb-4">
                         <h3 class="font-bold text-gray-800 text-lg">Histórico do Mês</h3>
                     </div>
                     <div id="dash-historico" class="space-y-3">
-                        <!-- Itens injetados via JS -->
                         <div class="text-center text-gray-400 py-8 text-sm font-medium">Carregando...</div>
                     </div>
                 </div>
@@ -275,32 +297,98 @@
         </div>
 
         <!-- TELA NOVA: CALENDÁRIO DA ESCALA -->
-        <div id="screen-calendar" class="screen bg-slate-50 no-scrollbar pb-32">
-            <div class="p-6 space-y-6">
-                <!-- Controle de Mês -->
-                <div class="flex justify-between items-center bg-white p-2 rounded-2xl shadow-sm border border-gray-100">
-                    <button onclick="changeMonth(-1)" class="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-brand-50 hover:text-brand-600 transition-all"><i class="fas fa-chevron-left"></i></button>
-                    <span id="cal-month-label" class="font-bold text-gray-700 text-lg uppercase tracking-wider">...</span>
-                    <button onclick="changeMonth(1)" class="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:bg-brand-50 hover:text-brand-600 transition-all"><i class="fas fa-chevron-right"></i></button>
+        <div id="screen-calendar" class="screen bg-[#121212] no-scrollbar pb-32">
+            <div class="p-4 space-y-4">
+                
+                <div class="flex justify-between items-center px-2 py-1">
+                    <button onclick="changeMonth(-1)" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition-all"><i class="fas fa-arrow-left"></i></button>
+                    <span id="cal-month-label" class="font-bold text-white text-lg uppercase tracking-wider">...</span>
+                    <button onclick="changeMonth(1)" class="w-10 h-10 flex items-center justify-center text-gray-400 hover:text-white transition-all"><i class="fas fa-arrow-right"></i></button>
                 </div>
 
-                <!-- Grade do Calendário -->
-                <div class="bg-[#1e293b] p-4 rounded-3xl shadow-lg border border-gray-800">
-                    <div class="grid grid-cols-7 gap-1 text-center text-[10px] font-bold text-gray-400 mb-3 lowercase">
+                <div class="bg-[#1e1e1e] rounded-2xl shadow-lg border border-gray-800 p-2 pb-4">
+                    <div class="grid grid-cols-7 gap-1 text-center text-xs font-medium text-gray-400 mb-2 lowercase">
                         <div>dom.</div><div>seg.</div><div>ter.</div><div>qua.</div><div>qui.</div><div>sex.</div><div>sáb.</div>
                     </div>
-                    <div id="calendar-grid" class="grid grid-cols-7 gap-1.5 text-center">
+                    <div id="calendar-grid" class="grid grid-cols-7 gap-[2px] text-center">
                         <!-- Dias injetados via JS -->
                     </div>
                 </div>
 
-                <!-- Detalhes do Dia Selecionado -->
-                <div class="mt-4">
-                    <h3 class="font-bold text-gray-500 text-sm tracking-wider uppercase mb-4 text-center">Plantões do Dia <span id="cal-selected-day-label" class="text-brand-600"></span></h3>
+                <div class="mt-6 px-2">
+                    <div class="flex justify-between items-center mb-4 border-b border-gray-800 pb-2">
+                        <h3 class="font-bold text-gray-300 text-sm tracking-widest uppercase">Plantões do Dia</h3>
+                        <button onclick="openPdfModal()" class="text-xs bg-gray-800 text-gray-300 font-bold px-3 py-1.5 rounded-lg border border-gray-700 flex items-center gap-2 hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-file-pdf"></i> PDF
+                        </button>
+                    </div>
                     <div id="cal-day-details" class="space-y-3">
                         <!-- Injetado via JS -->
                     </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- MODAL GERAR PDF -->
+        <div id="pdf-modal" class="hidden absolute inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+            <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-800 text-lg">Exportar Escala</h3>
+                    <button onclick="closePdfModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times"></i></button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Selecione de qual local você deseja gerar o PDF da escala deste mês:</p>
+                
+                <div id="pdf-locais-list" class="space-y-2 mb-6 max-h-48 overflow-y-auto no-scrollbar">
+                    <!-- Opções injetadas via JS -->
+                </div>
+
+                <button onclick="generatePDF()" class="w-full bg-brand-500 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-brand-600 transition-all flex items-center justify-center gap-2">
+                    <i class="fas fa-download"></i> Baixar PDF
+                </button>
+            </div>
+        </div>
+
+        <!-- MODAL RECUPERAÇÃO DE SENHA -->
+        <div id="recovery-modal" class="hidden absolute inset-0 bg-gray-900/40 backdrop-blur-sm z-[100] flex items-center justify-center p-6">
+            <div class="bg-white rounded-3xl p-6 shadow-2xl w-full max-w-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 class="font-bold text-gray-800 text-lg">Recuperar Senha</h3>
+                    <button onclick="closeRecoveryModal()" class="w-8 h-8 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center hover:bg-gray-200"><i class="fas fa-times"></i></button>
+                </div>
+                <p class="text-sm text-gray-500 mb-4">Digite seu e-mail de cadastro. Enviaremos uma senha temporária para você acessar o app.</p>
+                
+                <div class="relative mb-6">
+                    <i class="fas fa-envelope absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="email" id="recovery-email" placeholder="Seu e-mail" class="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-brand-400 outline-none transition-all text-gray-700">
+                </div>
+
+                <button onclick="handleRecoverPassword()" class="w-full bg-brand-500 text-white font-bold py-3.5 rounded-xl shadow-lg hover:bg-brand-600 transition-all">
+                    Enviar Senha
+                </button>
+            </div>
+        </div>
+        
+        <!-- TEMPLATE DO PDF -->
+        <div id="pdf-template">
+            <div id="pdf-content" class="p-8 bg-white" style="width: 800px; font-family: 'Plus Jakarta Sans', sans-serif;">
+                <div style="text-align: center; margin-bottom: 30px;">
+                    <h1 style="color: #0f172a; margin: 0; font-size: 24px;">Escala de Plantões</h1>
+                    <p id="pdf-month-label" style="color: #64748b; font-size: 16px; margin-top: 5px;"></p>
+                    <p id="pdf-local-label" style="color: #14b8a6; font-weight: bold; font-size: 14px; margin-top: 5px;"></p>
+                </div>
+                <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                    <thead>
+                        <tr style="background-color: #f1f5f9;">
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1; color: #334155; font-size: 14px;">Data</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1; color: #334155; font-size: 14px;">Local</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1; color: #334155; font-size: 14px;">Turno</th>
+                            <th style="padding: 12px; border-bottom: 2px solid #cbd5e1; color: #334155; font-size: 14px;">Observações</th>
+                        </tr>
+                    </thead>
+                    <tbody id="pdf-table-body">
+                        <!-- Injetado via JS -->
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -330,7 +418,7 @@
                         <label class="block text-sm font-bold text-gray-700 mb-2">Local de Trabalho</label>
                         <div class="relative">
                             <i class="fas fa-hospital absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                            <input type="text" id="plantao-local" placeholder="Ex: Hospital Central, UPA..." required class="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-brand-400 outline-none transition-all font-medium text-gray-700">
+                            <input type="text" id="plantao-local" placeholder="Ex: Hospital Central..." required class="w-full pl-11 pr-4 py-3.5 rounded-xl bg-slate-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-brand-400 outline-none transition-all font-medium text-gray-700">
                         </div>
                     </div>
 
@@ -369,10 +457,10 @@
 
                     <div>
                         <label class="block text-sm font-bold text-gray-700 mb-2">Observações</label>
-                        <textarea id="plantao-obs" rows="2" placeholder="Ex: UPA Central, UTI..." class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-brand-400 outline-none transition-all font-medium text-gray-700 resize-none"></textarea>
+                        <textarea id="plantao-obs" rows="2" placeholder="Ex: UTI, Setor A..." class="w-full px-4 py-3.5 rounded-xl bg-slate-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-brand-400 outline-none transition-all font-medium text-gray-700 resize-none"></textarea>
                     </div>
 
-                    <button type="button" onclick="handleAddPlantao()" class="w-full mt-2 bg-brand-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-500/30 hover:bg-brand-600 hover:-translate-y-0.5 active:translate-y-0 transition-all flex items-center justify-center gap-2">
+                    <button type="button" onclick="handleAddPlantao()" class="w-full mt-2 bg-brand-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-brand-600 transition-all flex items-center justify-center gap-2">
                         <i class="fas fa-check-circle"></i> Confirmar Plantão
                     </button>
                 </form>
@@ -440,7 +528,7 @@
                         <button type="button" onclick="handleDeletePlantao()" class="w-1/3 bg-red-50 text-red-500 font-bold py-4 rounded-xl border border-red-100 hover:bg-red-100 active:bg-red-200 transition-all flex items-center justify-center">
                             <i class="fas fa-trash text-lg"></i>
                         </button>
-                        <button type="button" onclick="handleUpdatePlantao()" class="w-2/3 bg-brand-500 text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-500/30 hover:bg-brand-600 transition-all flex items-center justify-center gap-2">
+                        <button type="button" onclick="handleUpdatePlantao()" class="w-2/3 bg-brand-500 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-brand-600 transition-all flex items-center justify-center gap-2">
                             Salvar Mudanças
                         </button>
                     </div>
@@ -457,61 +545,81 @@
                     </div>
                     <div>
                         <h3 class="font-bold text-gray-800">Tabela de Valores</h3>
-                        <p class="text-xs text-gray-500 font-medium">Configure seus honorários padrão</p>
+                        <p class="text-xs text-gray-500 font-medium">Configure seus honorários por hora</p>
                     </div>
                 </div>
                 
                 <form id="form-config" class="space-y-5">
-                    
-                    <!-- Bloco Semana -->
                     <div class="bg-slate-50 p-4 rounded-2xl border border-gray-100">
                         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Dias Úteis (Valor/Hora)</p>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Diurno <i class="fas fa-sun text-yellow-500 ml-1"></i></label>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Diurno</label>
                                 <input type="number" id="cfg-diurno-sem" placeholder="R$/h" class="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 focus:ring-2 focus:ring-brand-400 outline-none font-medium">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Noturno <i class="fas fa-moon text-indigo-400 ml-1"></i></label>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Noturno</label>
                                 <input type="number" id="cfg-noturno-sem" placeholder="R$/h" class="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 focus:ring-2 focus:ring-brand-400 outline-none font-medium">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bloco FDS -->
                     <div class="bg-slate-50 p-4 rounded-2xl border border-gray-100">
                         <p class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Finais de Semana (Valor/Hora)</p>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Diurno <i class="fas fa-sun text-yellow-500 ml-1"></i></label>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Diurno</label>
                                 <input type="number" id="cfg-diurno-fds" placeholder="R$/h" class="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 focus:ring-2 focus:ring-brand-400 outline-none font-medium">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Noturno <i class="fas fa-moon text-indigo-400 ml-1"></i></label>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Noturno</label>
                                 <input type="number" id="cfg-noturno-fds" placeholder="R$/h" class="w-full px-3 py-2 rounded-lg bg-white border border-gray-200 focus:ring-2 focus:ring-brand-400 outline-none font-medium">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Bloco Feriado -->
                     <div class="bg-orange-50/50 p-4 rounded-2xl border border-orange-100">
                         <p class="text-xs font-bold text-orange-400 uppercase tracking-wider mb-3">Feriados (Valor/Hora)</p>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Diurno <i class="fas fa-sun text-yellow-500 ml-1"></i></label>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Diurno</label>
                                 <input type="number" id="cfg-diurno-feriado" placeholder="R$/h" class="w-full px-3 py-2 rounded-lg bg-white border border-orange-200 focus:ring-2 focus:ring-brand-400 outline-none font-medium">
                             </div>
                             <div>
-                                <label class="block text-xs font-semibold text-gray-600 mb-1">Noturno <i class="fas fa-moon text-indigo-400 ml-1"></i></label>
+                                <label class="block text-xs font-semibold text-gray-600 mb-1">Noturno</label>
                                 <input type="number" id="cfg-noturno-feriado" placeholder="R$/h" class="w-full px-3 py-2 rounded-lg bg-white border border-orange-200 focus:ring-2 focus:ring-brand-400 outline-none font-medium">
                             </div>
                         </div>
                     </div>
 
-                    <button type="button" onclick="handleSaveConfig()" class="w-full mt-4 bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 hover:-translate-y-0.5 transition-all">
+                    <button type="button" onclick="handleSaveConfig()" class="w-full mt-4 bg-gray-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-gray-800 transition-all">
                         Salvar Configurações
                     </button>
                 </form>
+            </div>
+
+            <!-- NOVA SESSÃO: ALTERAR SENHA -->
+            <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 mb-6">
+                <div class="flex items-center gap-3 mb-6 pb-4 border-b border-gray-100">
+                    <div class="w-10 h-10 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center">
+                        <i class="fas fa-lock"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-gray-800">Segurança</h3>
+                        <p class="text-xs text-gray-500 font-medium">Altere sua senha de acesso</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div>
+                        <input type="password" id="cfg-senha-atual" placeholder="Senha Atual (ou Temporária)" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-brand-400 outline-none text-sm text-gray-700">
+                    </div>
+                    <div>
+                        <input type="password" id="cfg-senha-nova" placeholder="Nova Senha (min. 6 caracteres)" class="w-full px-4 py-3 rounded-xl bg-slate-50 border border-gray-200 focus:bg-white focus:ring-2 focus:ring-brand-400 outline-none text-sm text-gray-700">
+                    </div>
+                    <button type="button" onclick="handleChangePassword()" class="w-full bg-white border border-brand-200 text-brand-600 font-bold py-3.5 rounded-xl hover:bg-brand-50 transition-all">
+                        Atualizar Senha
+                    </button>
+                </div>
             </div>
         </div>
 
@@ -542,106 +650,43 @@
     </div>
 
     <script>
-        // MOCK DO BACKEND E UTILIDADES
-        function generateUUID() {
-            return Math.random().toString(36).substring(2, 15);
-        }
+        // === ATENÇÃO: COLOQUE A SUA URL AQUI ===
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzMZ0F43a5uVsiRr2s-MHPgfJ6SGTWYVi2LAyJXq7bsxLUva2Y6OMD0w8CGI0IkmbD3/exec';
 
-        const MockDB = {
-            init: function() {
-                if(!localStorage.getItem('usuarios')) localStorage.setItem('usuarios', JSON.stringify([]));
-                if(!localStorage.getItem('configuracoes')) localStorage.setItem('configuracoes', JSON.stringify([]));
-                if(!localStorage.getItem('plantoes')) localStorage.setItem('plantoes', JSON.stringify([]));
-            },
-            
-            registerUser: function(email, password) {
-                let users = JSON.parse(localStorage.getItem('usuarios') || '[]');
-                if(users.find(u => u.email === email)) return { status: 'error', message: 'E-mail já em uso.' };
-                
-                const userId = generateUUID();
-                users.push({ id: userId, email: email, password: password });
-                localStorage.setItem('usuarios', JSON.stringify(users));
-                return { status: 'success', data: { message: 'Conta criada!', userId: userId } };
-            },
-            
-            loginUser: function(email, password) {
-                let users = JSON.parse(localStorage.getItem('usuarios') || '[]');
-                let user = users.find(u => u.email === email);
-                
-                if (!user) {
-                    return { status: 'error', data: { message: 'Usuário não cadastrado.' } };
+        function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
+        function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+
+        // API CONFIG (Usando Text/Plain no POST para evitar CORS)
+        const API = {
+            request: async function(action, payload = {}) {
+                if(SCRIPT_URL === 'COLE_AQUI_A_URL_DO_SEU_WEB_APP') {
+                    console.warn("Simulando backend pois a URL não foi configurada.");
+                    return { status: 'error', data: { message: 'URL do backend não configurada. Configure o SCRIPT_URL.' } };
                 }
                 
-                if (user.password !== password) {
-                    return { status: 'error', data: { message: 'Senha incorreta.' } };
-                }
-                
-                return { status: 'success', data: { message: 'Login realizado', userId: user.id } };
-            },
+                showLoading();
+                try {
+                    const method = ['getConfig', 'getDashboard'].includes(action) ? 'GET' : 'POST';
+                    let url = SCRIPT_URL;
+                    let options = { method: method };
 
-            saveConfig: function(userId, config) {
-                let configs = JSON.parse(localStorage.getItem('configuracoes') || '[]');
-                let index = configs.findIndex(c => c.userId === userId);
-                let newConfig = { userId, ...config };
-                if(index > -1) configs[index] = newConfig; else configs.push(newConfig);
-                localStorage.setItem('configuracoes', JSON.stringify(configs));
-                return { status: 'success' };
-            },
-
-            getConfig: function(userId) {
-                let configs = JSON.parse(localStorage.getItem('configuracoes') || '[]');
-                let config = configs.find(c => c.userId === userId);
-                return { status: 'success', data: config || null };
-            },
-
-            addPlantao: function(userId, plantao) {
-                let plantoes = JSON.parse(localStorage.getItem('plantoes') || '[]');
-                plantoes.push({ id: generateUUID(), userId: userId, ...plantao, createdAt: new Date().toISOString() });
-                localStorage.setItem('plantoes', JSON.stringify(plantoes));
-                return { status: 'success' };
-            },
-
-            updatePlantao: function(userId, id, plantaoData) {
-                let plantoes = JSON.parse(localStorage.getItem('plantoes') || '[]');
-                let index = plantoes.findIndex(p => p.id === id && p.userId === userId);
-                if (index > -1) {
-                    plantoes[index] = { ...plantoes[index], ...plantaoData };
-                    localStorage.setItem('plantoes', JSON.stringify(plantoes));
-                    return { status: 'success' };
-                }
-                return { status: 'error' };
-            },
-
-            deletePlantao: function(userId, id) {
-                let plantoes = JSON.parse(localStorage.getItem('plantoes') || '[]');
-                let newPlantoes = plantoes.filter(p => !(p.id === id && p.userId === userId));
-                localStorage.setItem('plantoes', JSON.stringify(newPlantoes));
-                return { status: 'success' };
-            },
-
-            getPlantao: function(userId, id) {
-                let plantoes = JSON.parse(localStorage.getItem('plantoes') || '[]');
-                let plantao = plantoes.find(p => p.id === id && p.userId === userId);
-                return { status: 'success', data: plantao };
-            },
-
-            getDashboard: function(userId, mes, ano) {
-                let plantoes = JSON.parse(localStorage.getItem('plantoes') || '[]');
-                let myPlantoes = plantoes.filter(p => p.userId === userId);
-                
-                let totalPlantoes = 0; let faturamentoPrevisto = 0; let historico = [];
-
-                myPlantoes.forEach(p => {
-                    let pData = new Date(p.data + 'T00:00:00'); 
-                    if(pData.getMonth() + 1 == mes && pData.getFullYear() == ano) {
-                        totalPlantoes++;
-                        faturamentoPrevisto += parseFloat(p.valor || 0);
-                        historico.push(p);
+                    if (method === 'GET') {
+                        const params = new URLSearchParams({ action, ...payload });
+                        url += `?${params.toString()}`;
+                    } else {
+                        options.body = JSON.stringify({ action, ...payload });
+                        options.headers = { 'Content-Type': 'text/plain;charset=utf-8' }; 
                     }
-                });
 
-                historico.sort((a, b) => new Date(b.data) - new Date(a.data));
-                return { status: 'success', data: { totalPlantoes, faturamentoPrevisto, historico } };
+                    const response = await fetch(url, options);
+                    const result = await response.json();
+                    hideLoading();
+                    return result;
+                } catch (error) {
+                    hideLoading();
+                    console.error("API Error:", error);
+                    return { status: 'error', data: { message: 'Falha de conexão com o servidor.' } };
+                }
             }
         };
 
@@ -651,33 +696,31 @@
         let currentYear = new Date().getFullYear();
         let userConfig = null;
         let selectedCalendarDay = null;
+        let currentMonthData = { historico: [], totalPlantoes: 0, faturamentoPrevisto: 0 };
         const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho", "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"];
         
         let addCurrentMonth = new Date().getMonth() + 1;
         let addCurrentYear = new Date().getFullYear();
         let selectedDates = [];
 
-        // Paleta de Cores para os Locais (idêntica a do aplicativo de referência)
-        const locationColorPalette = ['#eab308', '#a855f7', '#22c55e', '#ef4444', '#3b82f6', '#f97316', '#ec4899'];
+        // PALETA DA IMAGEM DE REFERÊNCIA (Escala de Trabalho)
+        const locationColorPalette = ['#d4b21b', '#9b51e0', '#63a355', '#c0392b', '#2980b9', '#d35400'];
         const locationColorMap = {};
         let colorIndex = 0;
 
         function getLocationColor(localName) {
             const name = (localName || 'Outros').toUpperCase().trim();
             if(locationColorMap[name]) return locationColorMap[name];
-            
             locationColorMap[name] = locationColorPalette[colorIndex % locationColorPalette.length];
             colorIndex++;
             return locationColorMap[name];
         }
 
-        MockDB.init();
-
-        window.onload = () => {
-            let savedUser = sessionStorage.getItem('userId');
+        window.onload = async () => {
+            let savedUser = localStorage.getItem('userId');
             if(savedUser) {
                 currentUser = savedUser;
-                showApp();
+                await showApp();
             }
         };
 
@@ -690,60 +733,45 @@
             setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3000);
         }
 
-        // Animação de Contador de Dinheiro
-        function animateValue(obj, start, end, duration) {
-            let startTimestamp = null;
-            const step = (timestamp) => {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                // Ease out cubic
-                const easeProgress = 1 - Math.pow(1 - progress, 3); 
-                const current = (progress === 1) ? end : start + (end - start) * easeProgress;
-                obj.innerHTML = 'R$ ' + current.toLocaleString('pt-BR', {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                if (progress < 1) window.requestAnimationFrame(step);
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        function handleLogin() {
+        async function handleLogin() {
             const email = document.getElementById('auth-email').value.trim();
             const pass = document.getElementById('auth-pass').value;
             
-            if(!email) return showToast('Por favor, digite seu e-mail.', 'error');
+            if(!email) return showToast('Por favor, informe seu e-mail.', 'error');
             if(!pass) return showToast('Por favor, digite sua senha.', 'error');
 
-            const res = MockDB.loginUser(email, pass);
+            const res = await API.request('login', { email, password: pass });
             if(res.status === 'success') {
                 currentUser = res.data.userId;
-                sessionStorage.setItem('userId', currentUser);
-                showApp();
+                localStorage.setItem('userId', currentUser);
+                await showApp();
             } else {
                 showToast(res.data.message, 'error');
             }
         }
 
-        function handleRegister() {
+        async function handleRegister() {
             const email = document.getElementById('auth-email').value.trim();
             const pass = document.getElementById('auth-pass').value;
             
-            if(!email) return showToast('Por favor, informe um e-mail para cadastro.', 'error');
+            if(!email) return showToast('Por favor, informe um e-mail.', 'error');
             if(!pass) return showToast('Por favor, crie uma senha.', 'error');
             if(pass.length < 6) return showToast('A senha deve ter no mínimo 6 caracteres.', 'error');
 
-            const res = MockDB.registerUser(email, pass);
+            const res = await API.request('register', { email, password: pass });
             if(res.status === 'success') {
                 currentUser = res.data.userId;
-                sessionStorage.setItem('userId', currentUser);
-                showApp();
+                localStorage.setItem('userId', currentUser);
+                await showApp();
                 showToast('Conta criada com sucesso!', 'success');
             } else {
-                showToast(res.message, 'error');
+                showToast(res.data.message, 'error');
             }
         }
 
         function logout() {
             currentUser = null;
-            sessionStorage.removeItem('userId');
+            localStorage.removeItem('userId');
             document.getElementById('auth-email').value = '';
             document.getElementById('auth-pass').value = '';
             document.getElementById('app-header').classList.add('hidden');
@@ -751,18 +779,35 @@
             navigate('auth');
         }
 
-        function showApp() {
+        async function showApp() {
             document.getElementById('app-header').classList.remove('hidden');
             document.getElementById('bottom-nav').classList.remove('hidden');
-            loadConfig();
+            await loadConfig();
+            await fetchMonthData();
             navigate('dashboard');
         }
 
-        function navigate(screenName) {
-            document.querySelectorAll('.screen').forEach(s => {
-                s.classList.remove('active');
-            });
+        async function fetchMonthData() {
+            const res = await API.request('getDashboard', { userId: currentUser, mes: currentMonth, ano: currentYear });
+            if(res.status === 'success') {
+                currentMonthData = res.data;
+            } else {
+                currentMonthData = { historico: [], totalPlantoes: 0, faturamentoPrevisto: 0 };
+            }
+        }
+
+        async function changeMonth(delta) {
+            currentMonth += delta;
+            if(currentMonth > 12) { currentMonth = 1; currentYear++; }
+            if(currentMonth < 1) { currentMonth = 12; currentYear--; }
+            await fetchMonthData();
             
+            if(document.getElementById('screen-dashboard').classList.contains('active')) renderDashboard();
+            if(document.getElementById('screen-calendar').classList.contains('active')) renderCalendar();
+        }
+
+        function navigate(screenName) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 if(btn.id !== 'nav-add') {
                     btn.classList.remove('text-brand-600', 'bg-gray-50/50');
@@ -794,7 +839,7 @@
                 renderDashboard();
             } else if(screenName === 'calendar') {
                 document.getElementById('header-title').innerText = "Minha Escala";
-                document.getElementById('header-subtitle').innerText = "Calendário de plantões";
+                document.getElementById('header-subtitle').innerText = "Visão geral";
                 renderCalendar();
             } else if(screenName === 'add') {
                 document.getElementById('header-title').innerText = "Novo Plantão";
@@ -817,10 +862,13 @@
             }
         }
 
-        function loadConfig() {
-            const res = MockDB.getConfig(currentUser);
-            if(res.data) userConfig = res.data;
-            else userConfig = { diurno_semana: "", noturno_semana: "", diurno_fds: "", noturno_fds: "", diurno_feriado: "", noturno_feriado: "" };
+        async function loadConfig() {
+            const res = await API.request('getConfig', { userId: currentUser });
+            if(res.status === 'success' && res.data) {
+                userConfig = res.data;
+            } else {
+                userConfig = { diurno_semana: "", noturno_semana: "", diurno_fds: "", noturno_fds: "", diurno_feriado: "", noturno_feriado: "" };
+            }
         }
 
         function fillConfigForm() {
@@ -833,7 +881,7 @@
             document.getElementById('cfg-noturno-feriado').value = userConfig.noturno_feriado || '';
         }
 
-        function handleSaveConfig() {
+        async function handleSaveConfig() {
             const config = {
                 diurno_semana: document.getElementById('cfg-diurno-sem').value,
                 noturno_semana: document.getElementById('cfg-noturno-sem').value,
@@ -842,18 +890,54 @@
                 diurno_feriado: document.getElementById('cfg-diurno-feriado').value,
                 noturno_feriado: document.getElementById('cfg-noturno-feriado').value
             };
-            MockDB.saveConfig(currentUser, config);
-            showToast('Tabela atualizada com sucesso!');
-            userConfig = config;
+            const res = await API.request('saveConfig', { userId: currentUser, config: config });
+            if(res.status === 'success') {
+                showToast('Tabela atualizada com sucesso!');
+                userConfig = config;
+            } else {
+                showToast('Erro ao salvar tabela.', 'error');
+            }
+        }
+
+        function openRecoveryModal() { document.getElementById('recovery-modal').classList.remove('hidden'); }
+        function closeRecoveryModal() { document.getElementById('recovery-modal').classList.add('hidden'); }
+
+        async function handleRecoverPassword() {
+            const email = document.getElementById('recovery-email').value.trim();
+            if(!email) return showToast('Informe seu e-mail para recuperar.', 'error');
+            
+            const res = await API.request('recoverPassword', { email: email });
+            if(res.status === 'success') {
+                showToast(res.data.message, 'success');
+                closeRecoveryModal();
+                document.getElementById('recovery-email').value = '';
+            } else {
+                showToast(res.data.message, 'error');
+            }
+        }
+
+        async function handleChangePassword() {
+            const oldPass = document.getElementById('cfg-senha-atual').value;
+            const newPass = document.getElementById('cfg-senha-nova').value;
+            
+            if(!oldPass || !newPass) return showToast('Preencha as senhas.', 'error');
+            if(newPass.length < 6) return showToast('Nova senha deve ter no mínimo 6 caracteres.', 'error');
+            
+            const res = await API.request('changePassword', { userId: currentUser, oldPassword: oldPass, newPassword: newPass });
+            if(res.status === 'success') {
+                showToast(res.data.message, 'success');
+                document.getElementById('cfg-senha-atual').value = '';
+                document.getElementById('cfg-senha-nova').value = '';
+            } else {
+                showToast(res.data.message, 'error');
+            }
         }
 
         function autoSuggestValue() {
-            if(!userConfig) return;
+            if(!userConfig || selectedDates.length === 0) return;
             
             const turno = document.getElementById('plantao-turno').value;
             const isFeriado = document.getElementById('plantao-feriado').checked;
-            
-            if(selectedDates.length === 0) return;
             
             const d = new Date(selectedDates[0] + 'T12:00:00'); 
             const isFDS = d.getDay() === 0 || d.getDay() === 6; 
@@ -871,7 +955,6 @@
             const valDiurnoToUse = isFeriado ? vals.dFer : (isFDS ? vals.dFDS : vals.dSem);
             const valNoturnoToUse = isFeriado ? vals.nFer : (isFDS ? vals.nFDS : vals.nSem);
             
-            // Multiplica o valor da hora configurado pela duração de cada turno (12h)
             if(turno === 'Diurno') suggestedValue = valDiurnoToUse * 12;
             else if (turno === 'Noturno') suggestedValue = valNoturnoToUse * 12;
             else if (turno === '24h') suggestedValue = (valDiurnoToUse * 12) + (valNoturnoToUse * 12);
@@ -879,7 +962,7 @@
             if(suggestedValue) document.getElementById('plantao-valor').value = parseFloat(suggestedValue).toFixed(2);
         }
 
-        function handleAddPlantao() {
+        async function handleAddPlantao() {
             const local = document.getElementById('plantao-local').value.trim();
             const turno = document.getElementById('plantao-turno').value;
             const valor = document.getElementById('plantao-valor').value;
@@ -889,36 +972,37 @@
             if(selectedDates.length === 0) return showToast('Selecione pelo menos um dia', 'error');
             if(!local || !valor) return showToast('Preencha local e valor', 'error');
 
-            selectedDates.forEach(dataVal => {
-                const plantao = { 
-                    data: dataVal, 
-                    local: local,
-                    turno: turno, 
-                    valor: valor, 
-                    observacao: isFeriado ? `FERIADO • ${obs}` : obs 
-                };
-                MockDB.addPlantao(currentUser, plantao);
-            });
+            const plantoesArray = selectedDates.map(dataVal => ({
+                data: dataVal, 
+                local: local,
+                turno: turno, 
+                valor: valor, 
+                observacao: isFeriado ? `FERIADO • ${obs}` : obs 
+            }));
+
+            const res = await API.request('addPlantao', { userId: currentUser, plantoes: plantoesArray });
             
-            showToast(`${selectedDates.length} plantões adicionados!`);
-            
-            document.getElementById('plantao-local').value = '';
-            document.getElementById('plantao-obs').value = '';
-            document.getElementById('plantao-feriado').checked = false;
-            
-            const pDate = new Date(selectedDates[0] + 'T12:00:00');
-            currentMonth = pDate.getMonth() + 1;
-            currentYear = pDate.getFullYear();
-            
-            selectedDates = [];
-            
-            navigate('calendar');
+            if(res.status === 'success') {
+                showToast(`${selectedDates.length} plantões adicionados!`);
+                document.getElementById('plantao-local').value = '';
+                document.getElementById('plantao-obs').value = '';
+                document.getElementById('plantao-feriado').checked = false;
+                
+                const pDate = new Date(selectedDates[0] + 'T12:00:00');
+                currentMonth = pDate.getMonth() + 1;
+                currentYear = pDate.getFullYear();
+                
+                selectedDates = [];
+                await fetchMonthData();
+                navigate('calendar');
+            } else {
+                showToast('Erro ao salvar plantões.', 'error');
+            }
         }
 
         function openEditPlantao(id) {
-            const res = MockDB.getPlantao(currentUser, id);
-            if(res.status === 'success' && res.data) {
-                const p = res.data;
+            const p = currentMonthData.historico.find(x => x.id === id);
+            if(p) {
                 document.getElementById('edit-plantao-id').value = p.id;
                 document.getElementById('edit-plantao-data').value = p.data;
                 document.getElementById('edit-plantao-local').value = p.local || '';
@@ -929,16 +1013,14 @@
                 document.getElementById('edit-plantao-feriado').checked = isFeriado;
                 
                 let obsText = p.observacao;
-                if(isFeriado) {
-                    obsText = obsText.replace('FERIADO • ', '').replace('FERIADO', '').trim();
-                }
+                if(isFeriado) obsText = obsText.replace('FERIADO • ', '').replace('FERIADO', '').trim();
                 document.getElementById('edit-plantao-obs').value = obsText;
                 
                 navigate('edit');
             }
         }
 
-        function handleUpdatePlantao() {
+        async function handleUpdatePlantao() {
             const id = document.getElementById('edit-plantao-id').value;
             const dataVal = document.getElementById('edit-plantao-data').value;
             const local = document.getElementById('edit-plantao-local').value.trim();
@@ -950,36 +1032,29 @@
             if(!dataVal || !local || !valor) return showToast('Preencha data, local e valor', 'error');
 
             const updatedData = { 
-                data: dataVal, 
-                local: local,
-                turno: turno, 
-                valor: valor, 
+                data: dataVal, local: local, turno: turno, valor: valor, 
                 observacao: isFeriado ? `FERIADO • ${obs}` : obs 
             };
             
-            MockDB.updatePlantao(currentUser, id, updatedData);
-            showToast('Plantão atualizado!', 'success');
-            
-            const pDate = new Date(dataVal + 'T12:00:00');
-            currentMonth = pDate.getMonth() + 1;
-            currentYear = pDate.getFullYear();
-            
-            navigate('calendar');
+            const res = await API.request('updatePlantao', { userId: currentUser, id: id, plantaoData: updatedData });
+            if(res.status === 'success') {
+                showToast('Plantão atualizado!', 'success');
+                const pDate = new Date(dataVal + 'T12:00:00');
+                currentMonth = pDate.getMonth() + 1;
+                currentYear = pDate.getFullYear();
+                await fetchMonthData();
+                navigate('calendar');
+            } else { showToast('Erro ao atualizar.', 'error'); }
         }
 
-        function handleDeletePlantao() {
+        async function handleDeletePlantao() {
             const id = document.getElementById('edit-plantao-id').value;
-            MockDB.deletePlantao(currentUser, id);
-            showToast('Lançamento excluído!');
-            navigate('calendar');
-        }
-
-        // Funções para o Calendário de Adição (Múltiplas Datas)
-        function preSelectAddDate(dateStr) {
-            selectedDates = [dateStr];
-            const parts = dateStr.split('-');
-            addCurrentYear = parseInt(parts[0]);
-            addCurrentMonth = parseInt(parts[1]);
+            const res = await API.request('deletePlantao', { userId: currentUser, id: id });
+            if(res.status === 'success') {
+                showToast('Lançamento excluído!');
+                await fetchMonthData();
+                navigate('calendar');
+            } else { showToast('Erro ao excluir.', 'error'); }
         }
 
         function changeAddMonth(delta) {
@@ -997,14 +1072,11 @@
             const firstDay = new Date(addCurrentYear, addCurrentMonth - 1, 1).getDay();
             const daysInMonth = new Date(addCurrentYear, addCurrentMonth, 0).getDate();
             
-            for(let i = 0; i < firstDay; i++) {
-                grid.innerHTML += `<div></div>`;
-            }
+            for(let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
             
             for(let i = 1; i <= daysInMonth; i++) {
                 const dateStr = `${addCurrentYear}-${String(addCurrentMonth).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                 const isSelected = selectedDates.includes(dateStr);
-                
                 const bgClass = isSelected ? 'bg-brand-500 text-white shadow-md' : 'bg-gray-100 text-gray-500 hover:bg-gray-200';
                 
                 grid.innerHTML += `
@@ -1013,40 +1085,19 @@
                     </div>
                 `;
             }
-            updateSelectedCount();
+            document.getElementById('selected-days-count').innerText = `${selectedDates.length} dia${selectedDates.length !== 1 ? 's' : ''} selecionado${selectedDates.length !== 1 ? 's' : ''}`;
         }
 
         function toggleDateSelection(dateStr) {
             const index = selectedDates.indexOf(dateStr);
-            if (index > -1) {
-                selectedDates.splice(index, 1);
-            } else {
-                selectedDates.push(dateStr);
-            }
+            if (index > -1) selectedDates.splice(index, 1);
+            else selectedDates.push(dateStr);
             renderAddCalendar();
             autoSuggestValue();
         }
 
-        function updateSelectedCount() {
-            const count = selectedDates.length;
-            document.getElementById('selected-days-count').innerText = `${count} dia${count !== 1 ? 's' : ''} selecionado${count !== 1 ? 's' : ''}`;
-        }
-
-        function changeMonth(delta) {
-            currentMonth += delta;
-            if(currentMonth > 12) { currentMonth = 1; currentYear++; }
-            if(currentMonth < 1) { currentMonth = 12; currentYear--; }
-            renderDashboard();
-            if(!document.getElementById('screen-calendar').classList.contains('hidden')) {
-                renderCalendar();
-            }
-        }
-
         function renderCalendar() {
             document.getElementById('cal-month-label').innerText = `${monthNames[currentMonth-1]} ${currentYear}`;
-            
-            const res = MockDB.getDashboard(currentUser, currentMonth, currentYear);
-            if(res.status !== 'success') return;
             
             const grid = document.getElementById('calendar-grid');
             grid.innerHTML = '';
@@ -1054,18 +1105,14 @@
             const firstDay = new Date(currentYear, currentMonth - 1, 1).getDay();
             const daysInMonth = new Date(currentYear, currentMonth, 0).getDate();
             
-            // Agrupar plantões por dia
             const plantoesByDay = {};
-            res.data.historico.forEach(p => {
+            currentMonthData.historico.forEach(p => {
                 const day = new Date(p.data + 'T12:00:00').getDate();
                 if(!plantoesByDay[day]) plantoesByDay[day] = [];
                 plantoesByDay[day].push(p);
             });
             
-            // Preencher espaços vazios iniciais (dias do mês anterior)
-            for(let i = 0; i < firstDay; i++) {
-                grid.innerHTML += `<div></div>`;
-            }
+            for(let i = 0; i < firstDay; i++) grid.innerHTML += `<div></div>`;
             
             const today = new Date();
             const isCurrentMonth = today.getMonth() + 1 === currentMonth && today.getFullYear() === currentYear;
@@ -1073,84 +1120,66 @@
             for(let i = 1; i <= daysInMonth; i++) {
                 const hasPlantoes = plantoesByDay[i] || [];
                 let bgStyle = '';
-                let textStyle = 'text-gray-300 font-medium'; // Padrão sem plantão (fundo escuro)
+                let textStyle = 'text-gray-400'; 
+                let extraClasses = 'hover:bg-gray-800';
                 
                 if(hasPlantoes.length === 1) {
-                    const c1 = getLocationColor(hasPlantoes[0].local);
-                    bgStyle = `background-color: ${c1};`;
-                    textStyle = 'text-white font-bold text-sm shadow-sm';
+                    bgStyle = `background-color: ${getLocationColor(hasPlantoes[0].local)};`;
+                    textStyle = 'text-gray-900 font-bold';
+                    extraClasses = 'shadow-md';
                 } else if (hasPlantoes.length >= 2) {
-                    // Gradiente diagonal dividindo as duas cores
                     const c1 = getLocationColor(hasPlantoes[0].local);
                     const c2 = getLocationColor(hasPlantoes[1].local);
                     bgStyle = `background: linear-gradient(135deg, ${c1} 50%, ${c2} 50%);`;
-                    textStyle = 'text-white font-bold text-sm drop-shadow-md';
+                    textStyle = 'text-gray-900 font-bold';
+                    extraClasses = 'shadow-md';
                 }
                 
                 const isSelected = selectedCalendarDay === i;
-                // Anel azul se selecionado (como na imagem de referência)
-                const borderClass = isSelected ? 'ring-2 ring-blue-500 ring-offset-2 ring-offset-[#1e293b]' : '';
+                if(isSelected) extraClasses += ' ring-2 ring-blue-500 ring-offset-2 ring-offset-[#1e1e1e]';
                 
                 grid.innerHTML += `
-                    <div onclick="selectCalendarDay(${i})" class="aspect-square flex items-center justify-center rounded-xl cursor-pointer transition-all active:scale-95 ${borderClass}" style="${bgStyle}">
+                    <div onclick="selectCalendarDay(${i})" class="aspect-square flex items-center justify-center rounded-[10px] cursor-pointer transition-all active:scale-95 ${extraClasses}" style="${bgStyle}">
                         <span class="${textStyle}">${i}</span>
                     </div>
                 `;
             }
             
-            // Auto selecionar o dia de hoje (ou o dia 1)
             if(!selectedCalendarDay || selectedCalendarDay > daysInMonth) {
                 selectedCalendarDay = isCurrentMonth ? today.getDate() : 1;
             }
-            selectCalendarDay(selectedCalendarDay, res.data.historico);
+            selectCalendarDay(selectedCalendarDay, false);
         }
 
-        function selectCalendarDay(day, historicoOpcional = null) {
+        function selectCalendarDay(day, shouldRerender = true) {
             selectedCalendarDay = day;
-            document.getElementById('cal-selected-day-label').innerText = `${day} de ${monthNames[currentMonth-1].substring(0,3)}`;
-            
-            // Refazer a renderização para atualizar a borda (forma mais segura)
-            if(!historicoOpcional) {
-                renderCalendar();
-                return;
-            }
+            if(shouldRerender) renderCalendar();
 
             const listContainer = document.getElementById('cal-day-details');
             listContainer.innerHTML = '';
             
-            const plantoesDoDia = historicoOpcional.filter(p => new Date(p.data + 'T12:00:00').getDate() === day);
+            const plantoesDoDia = currentMonthData.historico.filter(p => new Date(p.data + 'T12:00:00').getDate() === day);
             
             if(plantoesDoDia.length === 0) {
                 listContainer.innerHTML = `
-                    <div class="text-center py-6 bg-white rounded-3xl border border-dashed border-gray-200">
-                        <p class="text-gray-400 font-medium text-sm mb-3">Dia livre</p>
-                        <button onclick="preSelectAddDate('${currentYear}-${String(currentMonth).padStart(2, '0')}-${String(day).padStart(2, '0')}'); navigate('add');" class="bg-gray-100 text-gray-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-gray-200 transition-all">
-                            <i class="fas fa-plus mr-1"></i> Adicionar Plantão Aqui
-                        </button>
+                    <div class="text-center py-6">
+                        <p class="text-gray-500 font-medium text-sm mb-3">Nenhum plantão neste dia.</p>
                     </div>`;
                 return;
             }
             
             plantoesDoDia.forEach(p => {
                 const color = getLocationColor(p.local);
-                const localName = p.local || 'Local não informado';
                 let horario = p.turno === 'Diurno' ? '07:00 → 19:00' : (p.turno === 'Noturno' ? '19:00 → 07:00' : '07:00 → 07:00 (24h)');
                 
                 listContainer.innerHTML += `
-                    <div onclick="openEditPlantao('${p.id}')" class="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-all group">
-                        <!-- Quadrado de cor (como na imagem) -->
-                        <div class="w-10 h-10 rounded-xl shadow-inner flex-shrink-0" style="background-color: ${color}"></div>
-                        
-                        <div class="flex-1 min-w-0 py-1">
-                            <p class="font-bold text-gray-800 text-sm truncate group-hover:text-brand-600 transition-colors">${localName}</p>
-                            <p class="text-[11px] text-gray-500 font-bold mt-1 flex items-center gap-1"><i class="far fa-clock"></i> ${horario}</p>
+                    <div onclick="openEditPlantao('${p.id}')" class="bg-[#1e1e1e] p-3 rounded-xl flex items-center gap-4 cursor-pointer hover:bg-gray-800 transition-colors">
+                        <div class="w-8 h-8 rounded-lg shadow-inner flex-shrink-0" style="background-color: ${color}"></div>
+                        <div class="flex-1 min-w-0">
+                            <p class="font-bold text-gray-200 text-sm truncate">${p.local || 'Local não informado'}</p>
+                            <p class="text-[11px] text-gray-400 font-medium mt-0.5"><i class="far fa-clock"></i> ${horario}</p>
                         </div>
-                        
-                        <div class="text-right">
-                            <button class="w-8 h-8 rounded-full bg-gray-50 text-gray-400 flex items-center justify-center group-hover:bg-brand-50 group-hover:text-brand-600 transition-all">
-                                <i class="fas fa-ellipsis-v"></i>
-                            </button>
-                        </div>
+                        <i class="fas fa-ellipsis-v text-gray-600"></i>
                     </div>
                 `;
             });
@@ -1158,18 +1187,11 @@
 
         function renderDashboard() {
             document.getElementById('dash-month-label').innerText = `${monthNames[currentMonth-1]} ${currentYear}`;
+            const data = currentMonthData;
             
-            const res = MockDB.getDashboard(currentUser, currentMonth, currentYear);
-            if(res.status !== 'success') return;
-            
-            const data = res.data;
             document.getElementById('dash-total').innerText = data.totalPlantoes;
+            document.getElementById('dash-faturamento').innerText = 'R$ ' + parseFloat(data.faturamentoPrevisto).toLocaleString('pt-BR', {minimumFractionDigits: 2});
             
-            // Animação de contagem de dinheiro
-            const faturamentoEl = document.getElementById('dash-faturamento');
-            animateValue(faturamentoEl, 0, parseFloat(data.faturamentoPrevisto), 1000);
-            
-            // Agrupamento por Local
             const locaisContainer = document.getElementById('dash-locais');
             locaisContainer.innerHTML = '';
             let locaisTotais = {};
@@ -1180,34 +1202,25 @@
                 locaisTotais[localName] += parseFloat(p.valor || 0);
             });
 
-            if(Object.keys(locaisTotais).length > 0) {
-                Object.keys(locaisTotais).forEach(local => {
-                    locaisContainer.innerHTML += `
-                        <div class="bg-white border border-gray-100 px-4 py-3 rounded-2xl shadow-sm flex-shrink-0 flex items-center gap-3">
-                            <div class="w-8 h-8 rounded-full bg-brand-50 text-brand-500 flex items-center justify-center">
-                                <i class="fas fa-hospital text-sm"></i>
-                            </div>
-                            <div>
-                                <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${local}</p>
-                                <p class="text-sm font-extrabold text-gray-800">R$ ${locaisTotais[local].toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                            </div>
+            Object.keys(locaisTotais).forEach(local => {
+                locaisContainer.innerHTML += `
+                    <div class="bg-white border border-gray-100 px-4 py-3 rounded-2xl shadow-sm flex-shrink-0 flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold" style="background-color: ${getLocationColor(local)}">
+                            <i class="fas fa-hospital text-sm"></i>
                         </div>
-                    `;
-                });
-            }
+                        <div>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase tracking-wider">${local}</p>
+                            <p class="text-sm font-extrabold text-gray-800">R$ ${locaisTotais[local].toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
+                        </div>
+                    </div>
+                `;
+            });
 
             const histContainer = document.getElementById('dash-historico');
             histContainer.innerHTML = '';
             
             if(data.historico.length === 0) {
-                histContainer.innerHTML = `
-                    <div class="text-center py-10 bg-white rounded-3xl border border-dashed border-gray-200">
-                        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-3 text-gray-300">
-                            <i class="fas fa-bed text-2xl"></i>
-                        </div>
-                        <p class="text-gray-500 font-medium">Nenhum plantão neste mês.</p>
-                        <p class="text-xs text-gray-400 mt-1">Sua escala está livre!</p>
-                    </div>`;
+                histContainer.innerHTML = `<div class="text-center py-10 bg-white rounded-3xl border border-dashed border-gray-200"><p class="text-gray-500 font-medium">Nenhum plantão neste mês.</p></div>`;
                 return;
             }
             
@@ -1219,40 +1232,93 @@
                 let icon = 'fa-sun'; let color = 'text-yellow-500'; let bg = 'bg-yellow-50';
                 if(p.turno === 'Noturno') { icon = 'fa-moon'; color = 'text-indigo-500'; bg = 'bg-indigo-50'; }
                 if(p.turno === '24h') { icon = 'fa-clock'; color = 'text-brand-500'; bg = 'bg-brand-50'; }
-
                 const isFeriado = p.observacao.includes('FERIADO');
-                const obsLimpa = p.observacao.replace('FERIADO • ', '').trim();
-                const localNome = p.local || 'Local não informado';
 
                 const div = document.createElement('div');
-                div.className = `list-item-enter bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4 relative overflow-hidden cursor-pointer hover:bg-gray-50 active:scale-[0.98] transition-all ${isFeriado ? 'border-orange-200' : ''}`;
+                div.className = `list-item-enter bg-white p-4 rounded-2xl shadow-sm border flex items-center gap-4 cursor-pointer hover:bg-gray-50 transition-all ${isFeriado ? 'border-orange-200 relative overflow-hidden' : 'border-gray-100'}`;
                 div.onclick = () => openEditPlantao(p.id);
-                // Adiciona delay progressivo na animação
                 div.style.animationDelay = `${index * 0.08}s`;
                 
-                if(isFeriado) {
-                    div.innerHTML += `<div class="absolute top-0 right-0 w-10 h-10 overflow-hidden"><div class="bg-orange-500 text-white text-[8px] font-bold py-1 w-16 text-center transform rotate-45 translate-x-3 translate-y-1 shadow-sm uppercase tracking-wider">Feriado</div></div>`;
-                }
+                if(isFeriado) div.innerHTML += `<div class="absolute top-0 right-0 w-10 h-10 overflow-hidden"><div class="bg-orange-500 text-white text-[8px] font-bold py-1 w-16 text-center transform rotate-45 translate-x-3 translate-y-1 shadow-sm uppercase tracking-wider">Feriado</div></div>`;
 
                 div.innerHTML += `
                     <div class="flex flex-col items-center justify-center min-w-[45px]">
                         <span class="text-xl font-extrabold text-gray-800">${day}</span>
                         <span class="text-[11px] uppercase text-gray-400 font-bold">${weekDay}</span>
                     </div>
-                    <div class="w-12 h-12 rounded-2xl ${bg} flex items-center justify-center flex-shrink-0 shadow-inner">
-                        <i class="fas ${icon} ${color} text-lg"></i>
-                    </div>
+                    <div class="w-12 h-12 rounded-2xl ${bg} flex items-center justify-center flex-shrink-0 shadow-inner"><i class="fas ${icon} ${color} text-lg"></i></div>
                     <div class="flex-1 min-w-0 py-1">
                         <p class="font-bold text-gray-800 text-sm truncate">${p.turno}</p>
-                        <p class="text-[11px] text-brand-600 font-bold truncate mt-0.5"><i class="fas fa-map-marker-alt mr-1"></i> ${localNome}</p>
-                        ${obsLimpa ? `<p class="text-[10px] text-gray-500 truncate mt-0.5 font-medium">${obsLimpa}</p>` : ''}
+                        <p class="text-[11px] font-bold truncate mt-0.5" style="color: ${getLocationColor(p.local)}"><i class="fas fa-map-marker-alt mr-1"></i> ${p.local || 'Local não informado'}</p>
                     </div>
-                    <div class="text-right pr-2 flex flex-col items-end gap-1">
+                    <div class="text-right pr-2">
                         <p class="font-extrabold text-gray-800">R$ ${parseFloat(p.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}</p>
-                        <span class="text-[10px] text-brand-500 font-bold bg-brand-50 px-2 py-0.5 rounded-md"><i class="fas fa-pen text-[8px]"></i> Editar</span>
                     </div>
                 `;
                 histContainer.appendChild(div);
+            });
+        }
+
+        function openPdfModal() {
+            const locaisList = document.getElementById('pdf-locais-list');
+            locaisList.innerHTML = `<label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100"><input type="radio" name="pdf-local" value="Todos" checked class="w-4 h-4 text-brand-600 focus:ring-brand-500"><span class="text-sm font-bold text-gray-700">Todos os Locais</span></label>`;
+            
+            const locaisSet = new Set();
+            currentMonthData.historico.forEach(p => { if(p.local) locaisSet.add(p.local.trim()); });
+
+            locaisSet.forEach(local => {
+                locaisList.innerHTML += `<label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-200 cursor-pointer hover:bg-gray-100"><input type="radio" name="pdf-local" value="${local}" class="w-4 h-4 text-brand-600 focus:ring-brand-500"><div class="w-3 h-3 rounded-full" style="background-color: ${getLocationColor(local)}"></div><span class="text-sm font-bold text-gray-700">${local}</span></label>`;
+            });
+            document.getElementById('pdf-modal').classList.remove('hidden');
+        }
+
+        function closePdfModal() { document.getElementById('pdf-modal').classList.add('hidden'); }
+
+        function generatePDF() {
+            closePdfModal();
+            showLoading();
+
+            const radios = document.getElementsByName('pdf-local');
+            let selectedLocal = 'Todos';
+            for (const radio of radios) { if (radio.checked) { selectedLocal = radio.value; break; } }
+
+            document.getElementById('pdf-month-label').innerText = `${monthNames[currentMonth-1].toUpperCase()} ${currentYear}`;
+            document.getElementById('pdf-local-label').innerText = selectedLocal === 'Todos' ? 'Visão Geral' : `Local: ${selectedLocal}`;
+
+            const tableBody = document.getElementById('pdf-table-body');
+            tableBody.innerHTML = '';
+            
+            let plantoesFiltrados = currentMonthData.historico.filter(p => selectedLocal === 'Todos' || (p.local && p.local.trim() === selectedLocal));
+            plantoesFiltrados.sort((a, b) => new Date(a.data) - new Date(b.data));
+
+            if(plantoesFiltrados.length === 0) {
+                tableBody.innerHTML = '<tr><td colspan="4" style="padding: 12px; text-align: center; color: #64748b;">Nenhum plantão neste local para este mês.</td></tr>';
+            } else {
+                plantoesFiltrados.forEach((p, index) => {
+                    const dataFormatada = new Date(p.data + 'T12:00:00').toLocaleDateString('pt-BR');
+                    const bgColor = index % 2 === 0 ? '#ffffff' : '#f8fafc';
+                    tableBody.innerHTML += `
+                        <tr style="background-color: ${bgColor}; border-bottom: 1px solid #e2e8f0;">
+                            <td style="padding: 12px; color: #475569; font-size: 13px;">${dataFormatada}</td>
+                            <td style="padding: 12px; color: #475569; font-size: 13px; font-weight: bold;">${p.local || '-'}</td>
+                            <td style="padding: 12px; color: #475569; font-size: 13px;">${p.turno}</td>
+                            <td style="padding: 12px; color: #475569; font-size: 13px;">${p.observacao || '-'}</td>
+                        </tr>
+                    `;
+                });
+            }
+
+            const element = document.getElementById('pdf-content');
+            const templateContainer = document.getElementById('pdf-template');
+            templateContainer.style.display = 'block';
+            
+            html2pdf().set({
+                margin: 10, filename: `escala_${monthNames[currentMonth-1].toLowerCase()}_${currentYear}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, useCORS: true }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(element).save().then(() => {
+                templateContainer.style.display = 'none';
+                hideLoading();
+                showToast('PDF gerado com sucesso!');
             });
         }
     </script>
