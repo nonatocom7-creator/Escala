@@ -143,6 +143,15 @@
                     </div>
                 </div>
 
+                <!-- CARD FATURAMENTO ANUAL -->
+                <div class="bg-gray-900 rounded-3xl p-5 shadow-lg mb-6 flex justify-between items-center overflow-hidden relative">
+                    <div class="z-10">
+                        <p class="text-gray-400 text-[11px] font-bold uppercase tracking-wider mb-1" id="dash-ano-label">Faturamento Anual</p>
+                        <h2 id="dash-faturamento-ano" class="text-2xl font-extrabold text-brand-500">R$ 0,00</h2>
+                    </div>
+                    <i class="fas fa-chart-line text-5xl text-gray-800 absolute right-4 opacity-50 z-0"></i>
+                </div>
+
                 <h3 class="text-sm font-extrabold text-gray-900 mb-3 uppercase tracking-wider">Por Local</h3>
                 <div class="flex gap-3 overflow-x-auto pb-4 hide-scrollbar" id="dash-locais"></div>
 
@@ -249,49 +258,68 @@
             </div>
 
             <!-- TELA 6: CONFIGURAÇÕES -->
-            <div id="screen-config" class="screen p-6 space-y-6">
-                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-hospital text-brand-500"></i> Locais de Trabalho</h3>
-                    <div class="flex gap-2 mb-4">
-                        <input type="text" id="novo-local-input" placeholder="Ex: Hospital Central" class="text-sm flex-1" style="padding-left: 16px;">
-                        <button onclick="addLocalTrabalho()" class="bg-gray-800 text-white px-4 rounded-xl font-bold text-sm"><i class="fas fa-plus"></i></button>
+            <div id="screen-config" class="screen p-6 space-y-4">
+                
+                <!-- Acordeão: Locais de Trabalho -->
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                    <button onclick="toggleAccordion('acc-locais')" class="w-full p-6 flex justify-between items-center text-left active:bg-gray-50 transition-colors">
+                        <h3 class="font-bold text-gray-900 flex items-center gap-2"><i class="fas fa-hospital text-brand-500"></i> Locais de Trabalho</h3>
+                        <i id="icon-acc-locais" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="acc-locais" class="hidden px-6 pb-6">
+                        <div class="flex gap-2 mb-4 mt-2">
+                            <input type="text" id="novo-local-input" placeholder="Ex: Hospital Central" class="text-sm flex-1" style="padding-left: 16px;">
+                            <button onclick="addLocalTrabalho()" class="bg-gray-800 text-white px-4 rounded-xl font-bold text-sm"><i class="fas fa-plus"></i></button>
+                        </div>
+                        <div id="lista-locais" class="flex flex-wrap gap-2"></div>
                     </div>
-                    <div id="lista-locais" class="flex flex-wrap gap-2"></div>
                 </div>
 
-                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-coins text-brand-500"></i> Valores por Hora (R$)</h3>
-                    <div class="space-y-4">
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dia Semana</label><input type="number" id="cfg-diurno-sem" style="padding-left: 16px;"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Noite Semana</label><input type="number" id="cfg-noturno-sem" style="padding-left: 16px;"></div>
+                <!-- Acordeão: Valores por Hora -->
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                    <button onclick="toggleAccordion('acc-valores')" class="w-full p-6 flex justify-between items-center text-left active:bg-gray-50 transition-colors">
+                        <h3 class="font-bold text-gray-900 flex items-center gap-2"><i class="fas fa-coins text-brand-500"></i> Valores (R$)</h3>
+                        <i id="icon-acc-valores" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="acc-valores" class="hidden px-6 pb-6">
+                        <div class="space-y-4 mt-2">
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dia Semana</label><input type="number" id="cfg-diurno-sem" style="padding-left: 16px;"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Noite Semana</label><input type="number" id="cfg-noturno-sem" style="padding-left: 16px;"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dia FDS</label><input type="number" id="cfg-diurno-fds" style="padding-left: 16px;"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Noite FDS</label><input type="number" id="cfg-noturno-fds" style="padding-left: 16px;"></div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dia Feriado</label><input type="number" id="cfg-diurno-feriado" style="padding-left: 16px;"></div>
+                                <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Noite Feriado</label><input type="number" id="cfg-noturno-feriado" style="padding-left: 16px;"></div>
+                            </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dia FDS</label><input type="number" id="cfg-diurno-fds" style="padding-left: 16px;"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Noite FDS</label><input type="number" id="cfg-noturno-fds" style="padding-left: 16px;"></div>
-                        </div>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Dia Feriado</label><input type="number" id="cfg-diurno-feriado" style="padding-left: 16px;"></div>
-                            <div><label class="block text-[10px] font-bold text-gray-400 uppercase mb-1">Noite Feriado</label><input type="number" id="cfg-noturno-feriado" style="padding-left: 16px;"></div>
-                        </div>
+                        <button onclick="handleSaveConfig()" class="w-full bg-[#111827] text-white font-bold py-4 rounded-2xl mt-6">Salvar Valores</button>
                     </div>
-                    <button onclick="handleSaveConfig()" class="w-full bg-[#111827] text-white font-bold py-4 rounded-2xl mt-6">Salvar Valores</button>
                 </div>
 
-                <div class="bg-white rounded-3xl p-6 border border-gray-100 shadow-sm">
-                    <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-key text-gray-500"></i> Segurança</h3>
-                    <div class="space-y-3">
-                        <div class="relative flex items-center">
-                            <i class="fas fa-lock absolute left-4 text-gray-400 z-10"></i>
-                            <input type="password" id="cfg-senha-atual" placeholder="Senha Atual" class="password-toggle">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500 z-10" onclick="togglePassword('cfg-senha-atual', this)"></i>
+                <!-- Acordeão: Segurança -->
+                <div class="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+                    <button onclick="toggleAccordion('acc-seguranca')" class="w-full p-6 flex justify-between items-center text-left active:bg-gray-50 transition-colors">
+                        <h3 class="font-bold text-gray-900 flex items-center gap-2"><i class="fas fa-key text-gray-500"></i> Segurança</h3>
+                        <i id="icon-acc-seguranca" class="fas fa-chevron-down text-gray-400 transition-transform duration-300"></i>
+                    </button>
+                    <div id="acc-seguranca" class="hidden px-6 pb-6">
+                        <div class="space-y-3 mt-2">
+                            <div class="relative flex items-center">
+                                <i class="fas fa-lock absolute left-4 text-gray-400 z-10"></i>
+                                <input type="password" id="cfg-senha-atual" placeholder="Senha Atual" class="password-toggle">
+                                <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500 z-10" onclick="togglePassword('cfg-senha-atual', this)"></i>
+                            </div>
+                            <div class="relative flex items-center">
+                                <i class="fas fa-lock absolute left-4 text-gray-400 z-10"></i>
+                                <input type="password" id="cfg-senha-nova" placeholder="Nova Senha" class="password-toggle">
+                                <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500 z-10" onclick="togglePassword('cfg-senha-nova', this)"></i>
+                            </div>
+                            <button onclick="handleChangePassword()" class="w-full bg-gray-100 text-gray-700 font-bold py-4 rounded-2xl mt-2">Atualizar Senha</button>
                         </div>
-                        <div class="relative flex items-center">
-                            <i class="fas fa-lock absolute left-4 text-gray-400 z-10"></i>
-                            <input type="password" id="cfg-senha-nova" placeholder="Nova Senha" class="password-toggle">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500 z-10" onclick="togglePassword('cfg-senha-nova', this)"></i>
-                        </div>
-                        <button onclick="handleChangePassword()" class="w-full bg-gray-100 text-gray-700 font-bold py-4 rounded-2xl mt-2">Atualizar Senha</button>
                     </div>
                 </div>
             </div>
@@ -359,8 +387,9 @@
     </div>
 
     <script>
-        // CONFIGURAÇÃO DA API
-        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEFtqBFyHasPYQJ7uTiCMO2XSZ5j0xhO6UMnmgZZggKPSq0rG2TB5VQl2g80dS3k1T/exec';
+        // CONFIGURAÇÃO DA API 
+        // A sua URL definitiva está mantida aqui com segurança!
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw5K0XnvTFCUXNnGsvkvUW9Wp0x8DC4Kye-V0bUVyV4tTzkzWpvRzv6iOAOsmLjGPpW/exec';
 
         // CONTROLE INTELIGENTE DO LOADER PARA REQUISIÇÕES SIMULTÂNEAS
         let requestCount = 0;
@@ -383,6 +412,22 @@
             toast.innerHTML = `<i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i> ${message}`;
             container.appendChild(toast);
             setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
+        }
+
+        // Função do Acordeão (Sanfona)
+        function toggleAccordion(id) {
+            const content = document.getElementById(id);
+            const icon = document.getElementById('icon-' + id);
+            
+            if (content.classList.contains('hidden')) {
+                // Abre o painel
+                content.classList.remove('hidden');
+                icon.classList.add('rotate-180');
+            } else {
+                // Fecha o painel
+                content.classList.add('hidden');
+                icon.classList.remove('rotate-180');
+            }
         }
 
         // Função do Olhinho de Senha
@@ -652,7 +697,7 @@
         async function fetchMonthData() {
             const res = await API.request('getDashboard', { userId: currentUser, mes: currentMonth, ano: currentYear });
             if(res.status === 'success') { currentMonthData = res.data; } 
-            else { currentMonthData = { historico: [], totalPlantoes: 0, faturamentoPrevisto: 0 }; }
+            else { currentMonthData = { historico: [], totalPlantoes: 0, faturamentoPrevisto: 0, faturamentoAno: 0 }; }
         }
 
         async function changeMonth(delta) {
@@ -671,6 +716,9 @@
             document.getElementById('dash-total').innerText = currentMonthData.totalPlantoes;
             document.getElementById('dash-faturamento').innerText = 'R$ ' + parseFloat(currentMonthData.faturamentoPrevisto).toLocaleString('pt-BR', {minimumFractionDigits: 2});
             
+            document.getElementById('dash-ano-label').innerText = `Faturamento Anual (${currentYear})`;
+            document.getElementById('dash-faturamento-ano').innerText = 'R$ ' + parseFloat(currentMonthData.faturamentoAno || 0).toLocaleString('pt-BR', {minimumFractionDigits: 2});
+
             const locaisContainer = document.getElementById('dash-locais'); locaisContainer.innerHTML = '';
             let locaisTotais = {};
             currentMonthData.historico.forEach(p => {
