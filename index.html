@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>PlantãoPro</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -48,24 +48,34 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        input:not([type="checkbox"]):not([type="radio"]), select { 
+        input:not([type="checkbox"]):not([type="radio"]) { 
             background-color: #f1f5f9; border: none; border-radius: 12px;
             padding: 16px 16px 16px 48px; font-size: 15px; color: #1e293b; width: 100%; font-weight: 500;
         }
-        input:focus, select:focus { outline: none; box-shadow: 0 0 0 2px #14b8a6; }
+        input:focus { outline: none; box-shadow: 0 0 0 2px #14b8a6; }
         
-        /* Ajuste do ícone para não atropelar o texto */
-        input { padding-right: 48px; }
+        /* Ajuste do ícone do olho na direita */
+        input[type="password"], input.password-toggle { padding-right: 48px; }
+
+        /* Estilo forçado e blindado para caixas de seleção no celular */
+        select {
+            background-color: #f1f5f9; border: none; border-radius: 12px;
+            padding: 16px 40px 16px 16px !important; font-size: 15px; color: #1e293b; width: 100%; font-weight: 500;
+            appearance: none; -webkit-appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2364748b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat; background-position: right 16px center; background-size: 16px;
+        }
+        select:focus { outline: none; box-shadow: 0 0 0 2px #14b8a6; }
 
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="text-gray-800 antialiased h-screen overflow-hidden flex justify-center items-center bg-gray-900">
+<!-- fixed inset-0 impede a barra de rolagem oculta no celular -->
+<body class="text-gray-800 antialiased fixed inset-0 overflow-hidden flex justify-center items-center bg-gray-900">
 
-    <div class="w-full h-full max-w-md bg-white relative flex flex-col shadow-2xl sm:rounded-[2rem] sm:h-[95vh] overflow-hidden">
+    <div class="w-full h-full max-w-md bg-white relative flex flex-col shadow-2xl sm:rounded-[2rem] sm:h-[95%] overflow-hidden">
         
-        <!-- Header Global -->
         <header id="app-header" class="hidden bg-white px-6 pt-10 pb-4 shadow-sm z-20 relative border-b border-gray-100">
             <div class="flex justify-between items-center">
                 <div>
@@ -82,7 +92,7 @@
 
         <main class="flex-1 overflow-y-auto relative bg-white pb-32"> <!-- pb-32 garante espaço para o menu flutuante -->
             
-            <!-- TELA 1: LOGIN -->
+            <!-- TELA 1: LOGIN (Visual Limpo e Branco Restaurado) -->
             <div id="screen-auth" class="screen active min-h-full flex flex-col justify-center px-8 bg-white relative">
                 <div class="text-center w-full max-w-sm mx-auto">
                     <div class="w-20 h-20 bg-white rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-gray-50">
@@ -98,15 +108,16 @@
                         </div>
                         <div class="relative flex items-center">
                             <i class="fas fa-lock absolute left-4 text-gray-400"></i>
-                            <input type="password" id="auth-pass" placeholder="Sua senha">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2" onclick="togglePassword('auth-pass', this)"></i>
+                            <input type="password" id="auth-pass" placeholder="Sua senha" class="password-toggle">
+                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500" onclick="togglePassword('auth-pass', this)"></i>
                         </div>
                         
                         <button onclick="handleLogin()" class="w-full bg-[#111827] text-white font-bold rounded-2xl py-4 mt-2 active:bg-gray-800 transition-colors">Entrar</button>
                         <button onclick="handleRegister()" class="w-full bg-white text-gray-800 font-bold rounded-2xl py-4 border-2 border-gray-100 active:bg-gray-50 transition-colors">Criar Nova Conta</button>
                         
                         <div class="text-center mt-6">
-                            <button onclick="openRecoveryModal()" class="text-brand-500 font-semibold text-sm hover:underline">Esqueceu a senha?</button>
+                            <!-- Corrigida cor do botão esqueceu a senha -->
+                            <button onclick="openRecoveryModal()" class="text-brand-500 font-bold text-sm hover:underline">Esqueceu a senha?</button>
                         </div>
                     </div>
                 </div>
@@ -159,14 +170,12 @@
 
                     <!-- Detalhes do dia -->
                     <div class="mt-6 pt-4 border-t border-gray-800 min-h-[60px]" id="cal-day-details"></div>
-                    
-                    <!-- Botão de gerar PDF logo abaixo -->
-                    <div class="mt-2 pt-4 border-t border-gray-800">
-                        <button onclick="openPdfModal()" class="w-full bg-brand-600 hover:bg-brand-500 text-white font-bold py-3.5 rounded-xl transition-colors flex justify-center items-center gap-2">
-                            <i class="fas fa-file-pdf"></i> Gerar Relatório PDF
-                        </button>
-                    </div>
                 </div>
+
+                <!-- Botão de gerar PDF longo e verde, abaixo da caixa preta -->
+                <button onclick="openPdfModal()" class="w-full mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-brand-500/20 flex justify-center items-center gap-2">
+                    <i class="fas fa-file-pdf"></i> Gerar Relatório PDF
+                </button>
             </div>
 
             <!-- TELA 4: NOVO PLANTÃO -->
@@ -188,12 +197,12 @@
                     <div class="space-y-4">
                         <div>
                             <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Local</label>
-                            <select id="plantao-local" style="padding-left: 16px;"></select>
+                            <select id="plantao-local"></select>
                         </div>
                         <div class="grid grid-cols-2 gap-4">
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Turno</label>
-                                <select id="plantao-turno" style="padding-left: 16px;" onchange="autoSuggestValue()">
+                                <select id="plantao-turno" onchange="autoSuggestValue()">
                                     <option value="Diurno">Diurno (12h)</option>
                                     <option value="Noturno">Noturno (12h)</option>
                                     <option value="24h">Plantão 24h</option>
@@ -227,9 +236,9 @@
 
                     <div class="space-y-4 mt-4">
                         <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Data</label><input type="date" id="edit-plantao-data" style="padding-left: 16px;"></div>
-                        <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Local</label><select id="edit-plantao-local" style="padding-left: 16px;"></select></div>
+                        <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Local</label><select id="edit-plantao-local"></select></div>
                         <div class="grid grid-cols-2 gap-4">
-                            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Turno</label><select id="edit-plantao-turno" style="padding-left: 16px;"><option value="Diurno">Diurno</option><option value="Noturno">Noturno</option><option value="24h">24h</option></select></div>
+                            <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Turno</label><select id="edit-plantao-turno"><option value="Diurno">Diurno</option><option value="Noturno">Noturno</option><option value="24h">24h</option></select></div>
                             <div><label class="block text-xs font-bold text-gray-500 uppercase mb-1">Valor (R$)</label><input type="number" id="edit-plantao-valor" style="padding-left: 16px;"></div>
                         </div>
                         <label class="flex items-center gap-3 p-4 bg-orange-50 rounded-2xl cursor-pointer"><input type="checkbox" id="edit-plantao-feriado" class="w-5 h-5 rounded text-orange-500"><span class="text-sm font-bold text-orange-700">Feriado</span></label>
@@ -277,13 +286,13 @@
                     <div class="space-y-3">
                         <div class="relative flex items-center">
                             <i class="fas fa-lock absolute left-4 text-gray-400"></i>
-                            <input type="password" id="cfg-senha-atual" placeholder="Senha Atual">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2" onclick="togglePassword('cfg-senha-atual', this)"></i>
+                            <input type="password" id="cfg-senha-atual" placeholder="Senha Atual" class="password-toggle">
+                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500" onclick="togglePassword('cfg-senha-atual', this)"></i>
                         </div>
                         <div class="relative flex items-center">
                             <i class="fas fa-lock absolute left-4 text-gray-400"></i>
-                            <input type="password" id="cfg-senha-nova" placeholder="Nova Senha">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2" onclick="togglePassword('cfg-senha-nova', this)"></i>
+                            <input type="password" id="cfg-senha-nova" placeholder="Nova Senha" class="password-toggle">
+                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500" onclick="togglePassword('cfg-senha-nova', this)"></i>
                         </div>
                         <button onclick="handleChangePassword()" class="w-full bg-gray-100 text-gray-700 font-bold py-4 rounded-2xl mt-2">Atualizar Senha</button>
                     </div>
@@ -291,25 +300,25 @@
             </div>
         </main>
 
-        <!-- BOTTOM NAVIGATION -->
-        <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-white rounded-t-3xl px-6 py-2 flex justify-between items-center z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.06)] pb-safe border-t border-gray-100 h-20">
-            <button id="nav-dashboard" onclick="navigate('dashboard')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 h-full transition-all">
+        <!-- BOTTOM NAVIGATION (Blindado contra barras de iPhone/Android) -->
+        <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-white rounded-t-3xl px-6 pt-3 flex justify-between items-start z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.06)] border-t border-gray-100" style="padding-bottom: max(env(safe-area-inset-bottom), 16px); min-height: 80px;">
+            <button id="nav-dashboard" onclick="navigate('dashboard')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 transition-all mt-1">
                 <i class="fas fa-chart-pie text-xl mb-0.5"></i><span class="text-[10px] font-bold">Resumo</span>
             </button>
             
             <div class="w-16 h-full relative">
-                <!-- Botão NOVO perfeitamente posicionado e com sombra extra -->
-                <button id="nav-add" onclick="navigate('add')" class="absolute left-1/2 -translate-x-1/2 -top-8 w-16 h-16 bg-brand-500 rounded-full flex flex-col items-center justify-center text-white shadow-xl shadow-brand-500/30 border-[5px] border-white transition-transform active:scale-95">
-                    <i class="fas fa-plus text-2xl"></i>
+                <!-- Botão NOVO perfeitamente posicionado -->
+                <button id="nav-add" onclick="navigate('add')" class="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 bg-brand-500 rounded-full flex flex-col items-center justify-center text-white shadow-lg shadow-brand-500/40 border-[4px] border-white transition-transform active:scale-95">
+                    <i class="fas fa-plus text-xl"></i>
                 </button>
-                <span class="text-[10px] font-bold text-gray-400 absolute bottom-1 w-full text-center">Novo</span>
+                <span class="text-[10px] font-bold text-brand-500 absolute top-8 w-full text-center mt-1">Novo</span>
             </div>
             
-            <button id="nav-calendar" onclick="navigate('calendar')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 h-full transition-all">
+            <button id="nav-calendar" onclick="navigate('calendar')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 transition-all mt-1">
                 <i class="fas fa-calendar-alt text-xl mb-0.5"></i><span class="text-[10px] font-bold">Escala</span>
             </button>
             
-            <button id="nav-config" onclick="navigate('config')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 h-full transition-all">
+            <button id="nav-config" onclick="navigate('config')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 transition-all mt-1">
                 <i class="fas fa-sliders-h text-xl mb-0.5"></i><span class="text-[10px] font-bold">Ajustes</span>
             </button>
         </nav>
@@ -353,10 +362,8 @@
     </div>
 
     <script>
-        // ==========================================
-        // URL ATUALIZADA DO GOOGLE APPS SCRIPT:
+        // URL ATUALIZADA DO GOOGLE APPS SCRIPT
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEFtqBFyHasPYQJ7uTiCMO2XSZ5j0xhO6UMnmgZZggKPSq0rG2TB5VQl2g80dS3k1T/exec';
-        // ==========================================
 
         function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
         function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
@@ -370,6 +377,7 @@
             setTimeout(() => { if(toast.parentElement) toast.remove(); }, 3500);
         }
 
+        // Função do Olhinho de Senha
         function togglePassword(inputId, iconElement) {
             const input = document.getElementById(inputId);
             if (input.type === 'password') {
@@ -383,6 +391,7 @@
             }
         }
 
+        // MÉTODOS DE COMUNICAÇÃO: FORÇADO O USO DE POST (SEM CACHE)
         const API = {
             request: async function(action, payload = {}) {
                 showLoading();
@@ -392,7 +401,15 @@
                         body: JSON.stringify({ action, ...payload }),
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                     });
-                    const result = await response.json(); 
+                    
+                    const textResult = await response.text(); 
+                    if(textResult.includes('<html') || textResult.includes('Google Drive')) {
+                        hideLoading();
+                        showToast('Erro de conexão. Verifique se a URL do Apps Script está correta e como "Qualquer Pessoa".', 'error');
+                        return { status: 'error', data: { message: 'Erro HTML no Google' } };
+                    }
+                    
+                    const result = JSON.parse(textResult);
                     hideLoading();
                     return result;
                 } catch (error) {
@@ -675,7 +692,7 @@
                 if(p.turno === '24h') { icon = 'fa-clock'; color = 'text-brand-500'; bg = 'bg-brand-50'; }
                 
                 histContainer.innerHTML += `
-                    <div onclick="openEditPlantao('${p.id}')" class="bg-gray-50 p-4 rounded-2xl flex items-center gap-4 cursor-pointer">
+                    <div onclick="openEditPlantao('${p.id}')" class="bg-gray-50 p-4 rounded-2xl flex items-center gap-4 cursor-pointer mb-2">
                         <div class="flex flex-col items-center min-w-[40px]">
                             <span class="text-xl font-extrabold text-gray-800">${day}</span>
                             <span class="text-[10px] uppercase text-gray-400 font-bold">${weekDay}</span>
@@ -725,13 +742,13 @@
                 
                 const isSelected = selectedCalendarDay === i;
                 if(isSelected) {
-                    extraClasses += ' border-2 border-blue-500'; 
-                    if(hasPlantoes.length === 0) textStyle = 'text-white font-bold';
+                    extraClasses += ' border border-blue-500 scale-110 z-10 shadow-lg bg-gray-800'; 
+                    textStyle = 'text-blue-400 font-bold';
+                    if(hasPlantoes.length > 0) textStyle = 'text-white font-bold';
                 }
                 
-                // h-10 w-full garante altura compacta, tirando a exigência de ser um quadrado gigante
                 grid.innerHTML += `
-                    <div onclick="selectCalendarDay(${i})" class="flex items-center justify-center rounded-xl cursor-pointer h-10 w-full ${extraClasses}" style="${bgStyle}">
+                    <div onclick="selectCalendarDay(${i})" class="flex items-center justify-center rounded-xl cursor-pointer h-10 w-full transition-all ${extraClasses}" style="${bgStyle}">
                         <span class="${textStyle} text-sm">${i}</span>
                     </div>`;
             }
@@ -748,7 +765,7 @@
                 return parseInt(dateParts[2], 10) === day;
             });
             
-            if(plantoesDoDia.length === 0) { listContainer.innerHTML = `<p class="text-gray-500 text-center text-sm my-4">Nenhum plantão.</p>`; return; }
+            if(plantoesDoDia.length === 0) { listContainer.innerHTML = `<p class="text-gray-500 text-center text-sm my-4">Nenhum plantão no dia ${day}.</p>`; return; }
             
             plantoesDoDia.forEach(p => {
                 listContainer.innerHTML += `
@@ -803,8 +820,8 @@
             for(let i = 1; i <= daysInMonth; i++) {
                 const dStr = `${addCurrentYear}-${String(addCurrentMonth).padStart(2, '0')}-${String(i).padStart(2, '0')}`;
                 const isSelected = selectedDates.includes(dStr);
-                const bg = isSelected ? 'bg-brand-500 text-white' : 'bg-gray-200 text-gray-600';
-                grid.innerHTML += `<div onclick="toggleDateSelection('${dStr}')" class="aspect-square flex items-center justify-center rounded-lg cursor-pointer font-bold text-xs ${bg}">${i}</div>`;
+                const bg = isSelected ? 'bg-brand-500 text-white shadow-md' : 'bg-white text-gray-600 border border-gray-100';
+                grid.innerHTML += `<div onclick="toggleDateSelection('${dStr}')" class="aspect-square flex items-center justify-center rounded-lg cursor-pointer font-bold text-xs ${bg} transition-colors">${i}</div>`;
             }
             document.getElementById('selected-days-count').innerText = `${selectedDates.length} dia(s)`;
         }
@@ -874,6 +891,7 @@
             locais.forEach(l => { list.innerHTML += `<label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl cursor-pointer"><input type="radio" name="pdf-local" value="${l}" class="w-4 h-4"><span class="text-sm font-bold">${l}</span></label>`; });
             document.getElementById('pdf-modal').classList.remove('hidden');
         }
+        
         function closePdfModal() { document.getElementById('pdf-modal').classList.add('hidden'); }
 
         function generatePDF() {
@@ -887,7 +905,7 @@
             const tbody = document.getElementById('pdf-table-body'); tbody.innerHTML = '';
             let filtrados = currentMonthData.historico.filter(p => selectedLocal === 'Todos' || p.local === selectedLocal).sort((a, b) => new Date(a.data) - new Date(b.data));
 
-            if(filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="padding:12px;text-align:center;">Vazio</td></tr>';
+            if(filtrados.length === 0) tbody.innerHTML = '<tr><td colspan="4" style="padding:12px;text-align:center;">Nenhum plantão encontrado neste local.</td></tr>';
             else {
                 filtrados.forEach((p, idx) => {
                     const dateParts = p.data.substring(0, 10).split('-');
@@ -897,7 +915,7 @@
             }
 
             document.getElementById('pdf-template').style.display = 'block';
-            html2pdf().set({ margin: 10, filename: `escala.pdf`, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }})
+            html2pdf().set({ margin: 10, filename: `escala_${monthNames[currentMonth-1]}.pdf`, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }})
             .from(document.getElementById('pdf-template')).save().then(() => {
                 document.getElementById('pdf-template').style.display = 'none'; hideLoading(); showToast('PDF gerado!');
             });
