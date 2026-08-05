@@ -48,13 +48,13 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
+        /* Proteção do layout dos inputs (espaço para ícones) */
         input:not([type="checkbox"]):not([type="radio"]) { 
             background-color: #f1f5f9; border: none; border-radius: 12px;
             padding: 16px 16px 16px 48px; font-size: 15px; color: #1e293b; width: 100%; font-weight: 500;
         }
         input:focus { outline: none; box-shadow: 0 0 0 2px #14b8a6; }
         
-        /* Ajuste do ícone do olho na direita */
         input[type="password"], input.password-toggle { padding-right: 48px; }
 
         /* Estilo forçado e blindado para caixas de seleção no celular */
@@ -71,12 +71,12 @@
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<!-- fixed inset-0 impede a barra de rolagem oculta no celular -->
-<body class="text-gray-800 antialiased fixed inset-0 overflow-hidden flex justify-center items-center bg-gray-900">
+<!-- fixando altura para impedir que barras de navegação do celular quebrem o layout -->
+<body class="text-gray-800 antialiased h-[100dvh] w-screen overflow-hidden flex justify-center items-center bg-gray-900">
 
-    <div class="w-full h-full max-w-md bg-white relative flex flex-col shadow-2xl sm:rounded-[2rem] sm:h-[95%] overflow-hidden">
+    <div class="w-full h-full max-w-md bg-white relative flex flex-col sm:shadow-2xl sm:rounded-[2rem] sm:h-[95%] overflow-hidden">
         
-        <header id="app-header" class="hidden bg-white px-6 pt-10 pb-4 shadow-sm z-20 relative border-b border-gray-100">
+        <header id="app-header" class="hidden bg-white px-6 pt-10 pb-4 shadow-sm z-20 relative border-b border-gray-100 flex-shrink-0">
             <div class="flex justify-between items-center">
                 <div>
                     <h1 id="header-title" class="text-2xl font-extrabold text-brand-500 tracking-tight">PlantãoPro</h1>
@@ -90,9 +90,9 @@
             </div>
         </header>
 
-        <main class="flex-1 overflow-y-auto relative bg-white pb-32"> <!-- pb-32 garante espaço para o menu flutuante -->
+        <main class="flex-1 overflow-y-auto relative bg-white pb-32">
             
-            <!-- TELA 1: LOGIN (Visual Limpo e Branco Restaurado) -->
+            <!-- TELA 1: LOGIN -->
             <div id="screen-auth" class="screen active min-h-full flex flex-col justify-center px-8 bg-white relative">
                 <div class="text-center w-full max-w-sm mx-auto">
                     <div class="w-20 h-20 bg-white rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-[0_4px_20px_rgba(0,0,0,0.06)] border border-gray-50">
@@ -103,20 +103,19 @@
                     
                     <div class="space-y-4 text-left">
                         <div class="relative flex items-center">
-                            <i class="fas fa-envelope absolute left-4 text-gray-400"></i>
+                            <i class="fas fa-envelope absolute left-4 text-gray-400 z-10"></i>
                             <input type="email" id="auth-email" placeholder="Seu e-mail">
                         </div>
                         <div class="relative flex items-center">
-                            <i class="fas fa-lock absolute left-4 text-gray-400"></i>
+                            <i class="fas fa-lock absolute left-4 text-gray-400 z-10"></i>
                             <input type="password" id="auth-pass" placeholder="Sua senha" class="password-toggle">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500" onclick="togglePassword('auth-pass', this)"></i>
+                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500 z-10" onclick="togglePassword('auth-pass', this)"></i>
                         </div>
                         
                         <button onclick="handleLogin()" class="w-full bg-[#111827] text-white font-bold rounded-2xl py-4 mt-2 active:bg-gray-800 transition-colors">Entrar</button>
                         <button onclick="handleRegister()" class="w-full bg-white text-gray-800 font-bold rounded-2xl py-4 border-2 border-gray-100 active:bg-gray-50 transition-colors">Criar Nova Conta</button>
                         
                         <div class="text-center mt-6">
-                            <!-- Corrigida cor do botão esqueceu a senha -->
                             <button onclick="openRecoveryModal()" class="text-brand-500 font-bold text-sm hover:underline">Esqueceu a senha?</button>
                         </div>
                     </div>
@@ -155,7 +154,7 @@
 
             <!-- TELA 3: CALENDÁRIO -->
             <div id="screen-calendar" class="screen flex flex-col p-6 bg-white">
-                <div class="bg-[#1a1a1a] rounded-[2rem] p-5 shadow-xl flex flex-col border border-gray-800">
+                <div class="bg-[#1a1a1a] rounded-[2rem] p-5 shadow-xl flex flex-col">
                     <div class="flex justify-between items-center mb-6">
                         <button onclick="changeMonth(-1)" class="text-gray-400 p-2"><i class="fas fa-chevron-left"></i></button>
                         <h2 id="cal-month-label" class="text-white font-bold capitalize">...</h2>
@@ -168,12 +167,10 @@
                     
                     <div id="calendar-grid" class="grid grid-cols-7 gap-y-2 gap-x-1"></div>
 
-                    <!-- Detalhes do dia -->
                     <div class="mt-6 pt-4 border-t border-gray-800 min-h-[60px]" id="cal-day-details"></div>
                 </div>
-
-                <!-- Botão de gerar PDF longo e verde, abaixo da caixa preta -->
-                <button onclick="openPdfModal()" class="w-full mt-4 bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-brand-500/20 flex justify-center items-center gap-2">
+                
+                <button onclick="openPdfModal()" class="w-full mt-6 bg-brand-500 hover:bg-brand-600 text-white font-bold py-4 rounded-2xl transition-colors shadow-lg shadow-brand-500/20 flex justify-center items-center gap-2">
                     <i class="fas fa-file-pdf"></i> Gerar Relatório PDF
                 </button>
             </div>
@@ -285,14 +282,14 @@
                     <h3 class="font-bold text-gray-900 mb-4 flex items-center gap-2"><i class="fas fa-key text-gray-500"></i> Segurança</h3>
                     <div class="space-y-3">
                         <div class="relative flex items-center">
-                            <i class="fas fa-lock absolute left-4 text-gray-400"></i>
+                            <i class="fas fa-lock absolute left-4 text-gray-400 z-10"></i>
                             <input type="password" id="cfg-senha-atual" placeholder="Senha Atual" class="password-toggle">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500" onclick="togglePassword('cfg-senha-atual', this)"></i>
+                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500 z-10" onclick="togglePassword('cfg-senha-atual', this)"></i>
                         </div>
                         <div class="relative flex items-center">
-                            <i class="fas fa-lock absolute left-4 text-gray-400"></i>
+                            <i class="fas fa-lock absolute left-4 text-gray-400 z-10"></i>
                             <input type="password" id="cfg-senha-nova" placeholder="Nova Senha" class="password-toggle">
-                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500" onclick="togglePassword('cfg-senha-nova', this)"></i>
+                            <i class="fas fa-eye-slash absolute right-4 text-gray-400 cursor-pointer p-2 hover:text-brand-500 z-10" onclick="togglePassword('cfg-senha-nova', this)"></i>
                         </div>
                         <button onclick="handleChangePassword()" class="w-full bg-gray-100 text-gray-700 font-bold py-4 rounded-2xl mt-2">Atualizar Senha</button>
                     </div>
@@ -300,18 +297,18 @@
             </div>
         </main>
 
-        <!-- BOTTOM NAVIGATION (Blindado contra barras de iPhone/Android) -->
-        <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-white rounded-t-3xl px-6 pt-3 flex justify-between items-start z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.06)] border-t border-gray-100" style="padding-bottom: max(env(safe-area-inset-bottom), 16px); min-height: 80px;">
+        <!-- BOTTOM NAVIGATION -->
+        <nav id="bottom-nav" class="hidden absolute bottom-0 w-full bg-white rounded-t-3xl px-6 flex justify-between items-start z-50 shadow-[0_-15px_40px_rgba(0,0,0,0.06)] border-t border-gray-100" style="padding-bottom: max(env(safe-area-inset-bottom), 16px); min-height: 85px; padding-top: 12px;">
             <button id="nav-dashboard" onclick="navigate('dashboard')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 transition-all mt-1">
                 <i class="fas fa-chart-pie text-xl mb-0.5"></i><span class="text-[10px] font-bold">Resumo</span>
             </button>
             
             <div class="w-16 h-full relative">
-                <!-- Botão NOVO perfeitamente posicionado -->
-                <button id="nav-add" onclick="navigate('add')" class="absolute left-1/2 -translate-x-1/2 -top-7 w-14 h-14 bg-brand-500 rounded-full flex flex-col items-center justify-center text-white shadow-lg shadow-brand-500/40 border-[4px] border-white transition-transform active:scale-95">
+                <!-- Botão NOVO blindado e centralizado -->
+                <button id="nav-add" onclick="navigate('add')" class="absolute left-1/2 -translate-x-1/2 -top-10 w-14 h-14 bg-brand-500 rounded-full flex flex-col items-center justify-center text-white shadow-lg shadow-brand-500/40 border-[4px] border-white transition-transform active:scale-95 z-50">
                     <i class="fas fa-plus text-xl"></i>
                 </button>
-                <span class="text-[10px] font-bold text-brand-500 absolute top-8 w-full text-center mt-1">Novo</span>
+                <span class="text-[10px] font-bold text-brand-500 absolute top-7 w-full text-center mt-1">Novo</span>
             </div>
             
             <button id="nav-calendar" onclick="navigate('calendar')" class="nav-btn flex flex-col items-center justify-center gap-1 text-gray-400 w-16 transition-all mt-1">
@@ -324,7 +321,7 @@
         </nav>
     </div>
 
-    <!-- Modais e Notificações -->
+    <!-- MODAIS E NOTIFICAÇÕES -->
     <div id="loading-overlay" class="loader-overlay"><div class="spinner"></div></div>
     <div id="toast-container"></div>
 
@@ -362,11 +359,22 @@
     </div>
 
     <script>
-        // URL ATUALIZADA DO GOOGLE APPS SCRIPT
+        // CONFIGURAÇÃO DA API
         const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxEFtqBFyHasPYQJ7uTiCMO2XSZ5j0xhO6UMnmgZZggKPSq0rG2TB5VQl2g80dS3k1T/exec';
 
-        function showLoading() { document.getElementById('loading-overlay').style.display = 'flex'; }
-        function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+        // CONTROLE INTELIGENTE DO LOADER PARA REQUISIÇÕES SIMULTÂNEAS
+        let requestCount = 0;
+        function showLoading() { 
+            requestCount++;
+            document.getElementById('loading-overlay').style.display = 'flex'; 
+        }
+        function hideLoading() { 
+            requestCount--;
+            if(requestCount <= 0) {
+                requestCount = 0;
+                document.getElementById('loading-overlay').style.display = 'none'; 
+            }
+        }
         
         function showToast(message, type = 'success') {
             const container = document.getElementById('toast-container');
@@ -391,7 +399,7 @@
             }
         }
 
-        // MÉTODOS DE COMUNICAÇÃO: FORÇADO O USO DE POST (SEM CACHE)
+        // FORÇA O USO DE POST EM TUDO PARA FUGIR DO CACHE
         const API = {
             request: async function(action, payload = {}) {
                 showLoading();
@@ -405,7 +413,7 @@
                     const textResult = await response.text(); 
                     if(textResult.includes('<html') || textResult.includes('Google Drive')) {
                         hideLoading();
-                        showToast('Erro de conexão. Verifique se a URL do Apps Script está correta e como "Qualquer Pessoa".', 'error');
+                        showToast('Erro de permissão no Google. Refaça a implantação.', 'error');
                         return { status: 'error', data: { message: 'Erro HTML no Google' } };
                     }
                     
@@ -512,11 +520,17 @@
             } else { showToast(res.data.message, 'error'); }
         }
 
+        // --- SISTEMA DE CARREGAMENTO (PARALELO SEM CACHE) ---
         async function showApp() {
             document.getElementById('app-header').classList.remove('hidden');
             document.getElementById('bottom-nav').classList.remove('hidden');
-            await loadConfig();
-            await fetchMonthData();
+            
+            // Busca Dados e Configurações AO MESMO TEMPO (Corta tempo pela metade)
+            await Promise.all([
+                loadConfig(),
+                fetchMonthData()
+            ]);
+            
             navigate('dashboard');
         }
 
@@ -645,7 +659,9 @@
             currentMonth += delta;
             if(currentMonth > 12) { currentMonth = 1; currentYear++; }
             if(currentMonth < 1) { currentMonth = 12; currentYear--; }
+            
             await fetchMonthData();
+            
             if(document.getElementById('screen-dashboard').classList.contains('active')) renderDashboard();
             if(document.getElementById('screen-calendar').classList.contains('active')) renderCalendar();
         }
@@ -747,8 +763,9 @@
                     if(hasPlantoes.length > 0) textStyle = 'text-white font-bold';
                 }
                 
+                // Reduzido a altura h-10 para h-8 para o calendário não ficar esticado
                 grid.innerHTML += `
-                    <div onclick="selectCalendarDay(${i})" class="flex items-center justify-center rounded-xl cursor-pointer h-10 w-full transition-all ${extraClasses}" style="${bgStyle}">
+                    <div onclick="selectCalendarDay(${i})" class="flex items-center justify-center rounded-xl cursor-pointer h-8 w-full transition-all ${extraClasses}" style="${bgStyle}">
                         <span class="${textStyle} text-sm">${i}</span>
                     </div>`;
             }
@@ -848,7 +865,11 @@
             if(res.status === 'success') {
                 showToast('Salvo com sucesso!');
                 selectedDates = [];
-                await fetchMonthData(); navigate('calendar');
+                // Direciona rápido pro calendário para não travar a tela e atualiza por trás
+                navigate('calendar');
+                document.getElementById('cal-day-details').innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Sincronizando com o Google...</p>';
+                await fetchMonthData();
+                if(document.getElementById('screen-calendar').classList.contains('active')) renderCalendar();
             } else { showToast('Erro ao salvar.', 'error'); }
         }
 
@@ -874,13 +895,25 @@
             };
             const id = document.getElementById('edit-plantao-id').value;
             const res = await API.request('updatePlantao', { userId: currentUser, id, plantaoData: data });
-            if(res.status === 'success') { showToast('Atualizado!'); await fetchMonthData(); navigate('calendar'); } 
+            if(res.status === 'success') { 
+                showToast('Atualizado!'); 
+                navigate('calendar');
+                document.getElementById('cal-day-details').innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Sincronizando com o Google...</p>';
+                await fetchMonthData(); 
+                if(document.getElementById('screen-calendar').classList.contains('active')) renderCalendar();
+            } 
             else { showToast('Erro.', 'error'); }
         }
 
         async function handleDeletePlantao() {
             const res = await API.request('deletePlantao', { userId: currentUser, id: document.getElementById('edit-plantao-id').value });
-            if(res.status === 'success') { showToast('Excluído!'); await fetchMonthData(); navigate('calendar'); } 
+            if(res.status === 'success') { 
+                showToast('Excluído!'); 
+                navigate('calendar');
+                document.getElementById('cal-day-details').innerHTML = '<p class="text-sm text-gray-500 text-center py-4">Sincronizando com o Google...</p>';
+                await fetchMonthData(); 
+                if(document.getElementById('screen-calendar').classList.contains('active')) renderCalendar();
+            } 
             else { showToast('Erro.', 'error'); }
         }
 
